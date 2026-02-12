@@ -1,0 +1,33 @@
+@model Finalproj.Models.EditarUtilizadorRolesViewModel
+@{
+    ViewData["Title"] = "Atribuir cargos";
+}
+
+<h1 class="mb-4">Atribuir cargos</h1>
+
+<div class="mb-3">
+    <strong>Utilizador:</strong> @Model.UserName
+    <br />
+    <strong>Email:</strong> @Model.Email
+</div>
+
+<form asp-action="EditarUtilizador" method="post">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="UserName" />
+    <input type="hidden" asp-for="Email" />
+
+    <p class="fw-bold">Cargos (roles):</p>
+    <div class="mb-4">
+        @for (var i = 0; i < Model.Roles.Count; i++)
+        {
+            <div class="form-check">
+                <input type="hidden" asp-for="Roles[i].Nome" />
+                <input type="checkbox" asp-for="Roles[i].Atribuido" class="form-check-input" />
+                <label asp-for="Roles[i].Atribuido" class="form-check-label">@Model.Roles[i].Nome</label>
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Utilizadores" class="btn btn-secondary">Cancelar</a>
+</form>

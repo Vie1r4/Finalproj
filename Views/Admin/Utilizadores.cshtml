@@ -1,0 +1,43 @@
+@model IEnumerable<Finalproj.Models.UtilizadorComRolesViewModel>
+@{
+    ViewData["Title"] = "Gerir utilizadores";
+}
+
+<h1 class="mb-4">Gerir utilizadores</h1>
+
+<p>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Voltar ao painel</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nome de utilizador</th>
+            <th>Email</th>
+            <th>Cargos</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.UserName</td>
+                <td>@u.Email</td>
+                <td>
+                    @if (u.Roles.Count > 0)
+                    {
+                        @string.Join(", ", u.Roles)
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="EditarUtilizador" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Atribuir cargos</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

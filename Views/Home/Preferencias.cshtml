@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Preferências";
+    var temaAtual = Context.Request.Cookies["Theme"] ?? "Light";
+}
+<h1 class="mb-4">Preferências</h1>
+<p class="lead">Tutorial Class 7: alterar a apresentação da aplicação entre modo claro e modo escuro (guardado em cookie).</p>
+<form asp-action="Preferencias" method="post" class="mt-4">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">Tema</label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="tema" id="temaLight" value="Light" @(temaAtual == "Light" ? "checked" : "") />
+            <label class="form-check-label" for="temaLight">Claro</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="tema" id="temaDark" value="Dark" @(temaAtual == "Dark" ? "checked" : "") />
+            <label class="form-check-label" for="temaDark">Escuro</label>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

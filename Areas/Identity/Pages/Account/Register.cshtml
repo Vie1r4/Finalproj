@@ -1,0 +1,67 @@
+@page
+@model Finalproj.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Criar conta";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+
+        <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.UserName" class="form-label"></label>
+                <input asp-for="Input.UserName" class="form-control" autocomplete="username" aria-required="true" />
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" aria-required="true" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Nome" class="form-label"></label>
+                <input asp-for="Input.Nome" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Input.Nome" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Telefone" class="form-label"></label>
+                <input asp-for="Input.Telefone" class="form-control" autocomplete="tel" />
+                <span asp-validation-for="Input.Telefone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Input.Role" class="form-label"></label>
+                <select asp-for="Input.Role" class="form-select" asp-items="@(new SelectList(ViewData["Roles"] as string[] ?? Array.Empty<string>()))">
+                    <option value="">-- Escolher cargo (opcional) --</option>
+                </select>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Criar conta</button>
+                <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-secondary">Já tenho conta – Entrar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

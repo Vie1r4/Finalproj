@@ -1,0 +1,29 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Verifique o seu email";
+    var reenviado = TempData["EmailReenviado"] as bool? == true;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+        @if (reenviado)
+        {
+            <div class="alert alert-success mb-4">Reenviamos um novo email de confirmação.</div>
+        }
+        <p class="lead">
+            Enviámos um email de confirmação para <strong>@Model.Email</strong>.
+        </p>
+        <p>
+            Abra o email e clique no link para ativar a sua conta. Se não receber o email em alguns minutos, verifique a pasta de spam ou
+            <a asp-page="./ResendEmailConfirmation" asp-route-email="@Model.Email">pedir novo email de confirmação</a>.
+        </p>
+        <p class="text-muted small mt-4">
+            Em modo de desenvolvimento, o link pode ter sido gravado no ficheiro <code>emails_confirmacao.txt</code> na raiz do projeto.
+        </p>
+        <div class="mt-4">
+            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-primary">Ir para Entrar</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+/* Tutorial Class 7: "create a file named site_dark.css as a clone of the site.css file" e "adding the style formatting lines" para tema escuro */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem #1a1a1a, 0 0 0 0.25rem #0d6efd;
+}
+
+.navbar-light.bg-white {
+  background-color: #2d2d2d !important;
+  border-bottom-color: #444 !important;
+}
+
+.navbar-light .navbar-brand,
+.navbar-light .nav-link.text-dark {
+  color: #e0e0e0 !important;
+}
+
+.nav-link.text-danger {
+  color: #ff6b6b !important;
+}
+
+.border-bottom.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0,0,0,.3) !important;
+}
+
+.footer.border-top.text-muted {
+  border-top-color: #444 !important;
+  color: #aaa !important;
+}
+
+.footer a {
+  color: #8ab4f8;
+}
+
+.card {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.card-title, .card-text {
+  color: #e0e0e0;
+}
+
+.table {
+  color: #e0e0e0;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(255,255,255,.05);
+}
+
+.form-control, .form-select {
+  background-color: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.form-control:focus {
+  background-color: #333;
+  color: #e0e0e0;
+}
+
+.form-control::placeholder {
+  color: #888;
+}
+
+.text-danger {
+  color: #ff6b6b !important;
+}
+
+.text-muted {
+  color: #aaa !important;
+}

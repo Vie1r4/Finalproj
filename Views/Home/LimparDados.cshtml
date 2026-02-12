@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Limpar todos os dados";
+}
+
+<h1 class="mb-4">Limpar todos os dados do site</h1>
+
+<p class="lead text-danger">
+    Isto apaga <strong>todas as contas</strong> (utilizadores) e <strong>todos os dados</strong> do site (cargos, paióis e respetivos dados adjacentes).
+    Os cargos são recriados. A sua sessão será terminada.
+</p>
+
+<form asp-action="LimparDados" method="post" class="mt-4">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Sim, apagar tudo</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

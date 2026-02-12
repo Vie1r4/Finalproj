@@ -1,0 +1,22 @@
+@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = Model.StatusMessage ?? "Confirmar email";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+        @if (Model.Succeeded)
+        {
+            <p class="lead text-success">A sua conta foi confirmada com sucesso.</p>
+            <p>Já pode iniciar sessão.</p>
+            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-primary">Entrar</a>
+        }
+        else
+        {
+            <p class="lead text-danger">Ocorreu um erro ao confirmar o email. O link pode ter expirado ou já ter sido utilizado.</p>
+            <a asp-page="./ResendEmailConfirmation" class="btn btn-outline-primary">Reenviar email de confirmação</a>
+        }
+    </div>
+</div>
