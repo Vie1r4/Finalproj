@@ -1,0 +1,40 @@
+@model IEnumerable<Finalproj.Models.EntradaPaiol>
+@{
+    ViewData["Title"] = "Histórico de entradas no paiol";
+}
+<h1>Histórico de entradas</h1>
+@if (TempData["EntradaSucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["EntradaSucesso"]</div>
+}
+<p>
+    <a asp-action="Registar" class="btn btn-primary">Registar nova entrada</a>
+    <a asp-controller="Paiol" asp-action="Index" class="btn btn-secondary">Ver paióis</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Paiol</th>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>NEM (kg)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var e in Model)
+        {
+            <tr>
+                <td>@e.DataEntrada.ToLocalTime().ToString("g")</td>
+                <td>@e.Paiol?.Nome</td>
+                <td>@e.Produto?.Nome</td>
+                <td>@e.Quantidade</td>
+                <td>@((e.Quantidade * (e.Produto?.NEMPorUnidade ?? 0)).ToString("N2"))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (!Model.Any())
+{
+    <p class="text-muted">Ainda não há entradas registadas.</p>
+}

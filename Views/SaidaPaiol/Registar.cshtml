@@ -1,0 +1,40 @@
+@model Finalproj.Models.SaidaPaiolViewModel
+@{
+    ViewData["Title"] = "Retirar material";
+    var paiolNome = ViewData["PaiolNome"] as string ?? "";
+    var produtoNome = ViewData["ProdutoNome"] as string ?? "";
+    var stock = ViewData["StockDisponivel"] is decimal s ? s : 0m;
+}
+
+<h1>Retirar material</h1>
+<p class="text-muted">Indique o número de unidades que pretende retirar deste paiol.</p>
+<hr />
+
+<div class="row">
+    <div class="col-md-5">
+        <dl class="row mb-3">
+            <dt class="col-sm-4">Paiol</dt>
+            <dd class="col-sm-8">@paiolNome</dd>
+            <dt class="col-sm-4">Produto</dt>
+            <dd class="col-sm-8">@produtoNome</dd>
+            <dt class="col-sm-4">Stock disponível</dt>
+            <dd class="col-sm-8">@stock.ToString("N2")</dd>
+        </dl>
+
+        <form asp-action="Registar" method="post">
+            <input type="hidden" asp-for="PaiolId" />
+            <input type="hidden" asp-for="ProdutoId" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Quantidade" class="form-label">Quantidade a retirar</label>
+                <input asp-for="Quantidade" class="form-control" step="0.0001" />
+                <span asp-validation-for="Quantidade" class="text-danger"></span>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Registar saída</button>
+                <a asp-controller="Paiol" asp-action="Conteudo" asp-route-id="@Model.PaiolId" class="btn btn-outline-secondary">Voltar ao conteúdo do paiol</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -55,6 +55,7 @@ namespace Finalproj.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(Input.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                     return LocalRedirect(returnUrl);
+
                 var user = await _userManager.FindByNameAsync(Input.UserName);
                 if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
                 {
@@ -62,7 +63,15 @@ namespace Finalproj.Areas.Identity.Pages.Account
                     ViewData["EmailNaoConfirmado"] = user.Email;
                     return Page();
                 }
-                ModelState.AddModelError(string.Empty, "Tentativa de login inválida.");
+
+                if (result.IsLockedOut)
+                {
+                    ModelState.AddModelError(string.Empty, "A sua conta está temporariamente bloqueada devido a várias tentativas falhadas. Tente novamente mais tarde.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Nome de utilizador ou palavra-passe incorretos.");
+                }
             }
             return Page();
         }

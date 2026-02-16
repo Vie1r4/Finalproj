@@ -1,30 +1,25 @@
 @model IEnumerable<Finalproj.Models.Produto>
 @using Finalproj.Models
 @{
-    ViewData["Title"] = "Catálogo";
+    ViewData["Title"] = "Gerir produtos";
     var pesquisa = ViewData["Pesquisa"] as string ?? "";
     var classificacao = ViewData["Classificacao"] as string ?? "";
     var filtroTecnico = ViewData["FiltroTecnico"] as string ?? "";
     var calibre = ViewData["Calibre"] as string ?? "";
 }
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">Catálogo</h1>
-    @if (User.IsInRole("Admin"))
-    {
-        <a asp-action="Gerir" class="btn btn-primary">Gerir produtos</a>
-    }
-</div>
+<h1>Gerir produtos</h1>
+<p class="text-muted">Use os filtros abaixo para encontrar o produto. Aqui pode adicionar, editar ou eliminar.</p>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+        <h6 class="card-title">Subdivisão dos produtos</h6>
+        <form method="get" asp-action="Gerir" class="row g-2 align-items-end">
             <div class="col-12 col-md-4">
                 <label class="form-label small text-muted">Pesquisar por nome</label>
                 <input type="text" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome do produto..." />
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label small text-muted">Classificação de risco</label>
+                <label class="form-label small text-muted">Classificação de Risco</label>
                 <select name="classificacao" class="form-select">
                     <option value="">— Todas —</option>
                     @foreach (var c in ConstantesCatalogo.ClassificacoesRisco)
@@ -58,38 +53,49 @@
             </div>
         </form>
         <div class="mt-2">
-            <a asp-action="Index" class="small text-muted">Limpar filtros</a>
+            <a asp-action="Gerir" class="small text-muted">Limpar filtros</a>
         </div>
     </div>
 </div>
 
-@if (Model.Any())
-{
-    <table class="table">
-        <thead>
+<p>
+    <a asp-action="Create" class="btn btn-primary">Criar produto</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar ao Catálogo</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(m => m.Nome)</th>
+            <th>NEM/unidade (kg)</th>
+            <th>Classificação de Risco</th>
+            <th>Filtro técnico</th>
+            <th>Calibre</th>
+            <th>Unidade</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
             <tr>
-                <th>Nome</th>
-                <th>Classificação de risco</th>
-                <th>Filtro técnico</th>
-                <th>Calibre</th>
-                <th>NEM/unidade (kg)</th>
+                <td>@item.Nome</td>
+                <td>@item.NEMPorUnidade.ToString("N2")</td>
+                <td>@ConstantesCatalogo.TextoClassificacao(item.FamiliaRisco)</td>
+                <td>@ConstantesCatalogo.TextoFiltroTecnico(item.FiltroTecnico)</td>
+                <td>@ConstantesCatalogo.TextoCalibre(item.Calibre)</td>
+                <td>@(item.Unidade ?? "—")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Nome</td>
-                    <td>@ConstantesCatalogo.TextoClassificacao(item.FamiliaRisco)</td>
-                    <td>@ConstantesCatalogo.TextoFiltroTecnico(item.FiltroTecnico)</td>
-                    <td>@ConstantesCatalogo.TextoCalibre(item.Calibre)</td>
-                    <td>@item.NEMPorUnidade.ToString("N2")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
 {
-    <p class="text-muted">Nenhum produto encontrado. Ajuste os filtros ou use Gerir produtos para adicionar, editar ou eliminar.</p>
+    <p class="text-muted">Nenhum produto encontrado com estes filtros.</p>
 }

@@ -1,21 +1,31 @@
 @model IEnumerable<Finalproj.Models.Paiol>
 
 @{
-    ViewData["Title"] = "Gestão de Paióis";
+    ViewData["Title"] = "Armazém";
 }
 
-<h1>Gestão de Paióis</h1>
-
-<p>
-    <a asp-action="Create">Criar novo paiol</a>
-</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Armazém</h1>
+        <p class="text-muted mb-0">Clique no paiol para ver o conteúdo. Use Detalhes para informações do paiol.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Movimentos" class="btn btn-outline-secondary">Movimentos</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Gestao" class="btn btn-outline-primary">Gestão de Paióis</a>
+        }
+    </div>
+</div>
 
 <table class="table">
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.Nome)</th>
             <th>@Html.DisplayNameFor(model => model.Localizacao)</th>
-            <th>@Html.DisplayNameFor(model => model.LimiteMLE)</th>
+            <th>Perfil de Risco</th>
+            <th>Teto de segurança (kg)</th>
+            <th>Estado</th>
             <th></th>
         </tr>
     </thead>
@@ -23,15 +33,20 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Nome)</td>
+                <td><a asp-action="Conteudo" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Nome)</a></td>
                 <td>@Html.DisplayFor(modelItem => item.Localizacao)</td>
+                <td>@item.PerfilRisco</td>
                 <td>@Html.DisplayFor(modelItem => item.LimiteMLE)</td>
+                <td>@item.Estado</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                    <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Não tem acesso a nenhum paiol. Contacte o administrador para obter permissões.</p>
+}

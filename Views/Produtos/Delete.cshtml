@@ -1,0 +1,18 @@
+@model Finalproj.Models.Produto
+@{
+    ViewData["Title"] = "Eliminar Produto";
+}
+<h1>Eliminar produto</h1>
+<p class="text-danger">Tem a certeza que deseja eliminar este produto?</p>
+<dl class="row">
+    <dt class="col-sm-2">@Html.DisplayNameFor(m => m.Nome)</dt>
+    <dd class="col-sm-10">@Model.Nome</dd>
+    <dt class="col-sm-2">NEM por unidade</dt>
+    <dd class="col-sm-10">@Model.NEMPorUnidade kg</dd>
+    <dt class="col-sm-2">Classificação de Risco</dt>
+    <dd class="col-sm-10">@ConstantesCatalogo.TextoClassificacao(Model.FamiliaRisco)</dd>
+</dl>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Gerir" class="btn btn-secondary">Cancelar</a>
+</form>

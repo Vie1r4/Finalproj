@@ -1,0 +1,52 @@
+@model Finalproj.Models.Produto
+@{
+    ViewData["Title"] = "Editar Produto";
+}
+<h1>Editar produto</h1>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-2">
+                <label asp-for="Nome" class="form-label"></label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+            <div class="mb-2">
+                <label asp-for="NEMPorUnidade" class="form-label"></label>
+                <input asp-for="NEMPorUnidade" class="form-control" step="0.0001" />
+                <span asp-validation-for="NEMPorUnidade" class="text-danger"></span>
+            </div>
+            <div class="mb-2">
+                <label asp-for="FamiliaRisco" class="form-label"></label>
+                <select asp-for="FamiliaRisco" class="form-select" asp-items="@ViewBag.FamiliaRisco">
+                    <option value="">-- Escolher --</option>
+                </select>
+                <span asp-validation-for="FamiliaRisco" class="text-danger"></span>
+            </div>
+            <div class="mb-2">
+                <label asp-for="Unidade" class="form-label"></label>
+                <input asp-for="Unidade" class="form-control" />
+            </div>
+            <div class="mb-2">
+                <label asp-for="FiltroTecnico" class="form-label"></label>
+                <select asp-for="FiltroTecnico" class="form-select" asp-items="@ViewBag.FiltroTecnico">
+                    <option value="">— Opcional —</option>
+                </select>
+            </div>
+            <div class="mb-2">
+                <label asp-for="Calibre" class="form-label"></label>
+                <select asp-for="Calibre" class="form-select" asp-items="@ViewBag.Calibre">
+                    <option value="">— Opcional —</option>
+                </select>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Gerir" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,45 @@
+@model Finalproj.Models.Paiol
+@{
+    ViewData["Title"] = "Conteúdo do paiol";
+    var carga = ViewData["Carga"] as IEnumerable<Finalproj.Models.CargaPaiolItem> ?? Enumerable.Empty<Finalproj.Models.CargaPaiolItem>();
+}
+
+<h1>@Model?.Nome</h1>
+<p class="text-muted">Conteúdo do paiol. Para retirar material, use Retirar no item.</p>
+
+<p>
+    <a asp-controller="EntradaPaiol" asp-action="Registar" asp-route-paiolId="@Model?.Id" class="btn btn-success">Adicionar material</a>
+    <a asp-action="Details" asp-route-id="@Model?.Id" class="btn btn-outline-secondary">Detalhes do paiol</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar ao Armazém</a>
+</p>
+
+@if (carga.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>NEM (kg)</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var x in carga)
+            {
+                <tr>
+                    <td>@x.ProdutoNome</td>
+                    <td>@x.Quantidade.ToString("N2")</td>
+                    <td>@x.NEMTotal.ToString("N2")</td>
+                    <td>
+                        <a asp-controller="SaidaPaiol" asp-action="Registar" asp-route-paiolId="@Model?.Id" asp-route-produtoId="@x.ProdutoId" class="btn btn-warning btn-sm">Retirar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Não há material neste paiol. Use Adicionar material para registar uma entrada.</p>
+}

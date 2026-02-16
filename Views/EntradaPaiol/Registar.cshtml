@@ -1,0 +1,85 @@
+@model Finalproj.Models.EntradaPaiolViewModel
+@using Finalproj.Models
+@{
+    ViewData["Title"] = "Registar entrada no paiol";
+    var classificacao = ViewData["Classificacao"] as string ?? "";
+    var filtroTecnico = ViewData["FiltroTecnico"] as string ?? "";
+    var calibre = ViewData["Calibre"] as string ?? "";
+}
+<h1>Registar entrada no paiol</h1>
+<p class="text-muted">Processo de decisão: o sistema valida o perfil de risco e o teto de segurança (NEM) antes de aceitar.</p>
+<hr />
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h6 class="card-title">Filtrar produtos (subdivisão do catálogo)</h6>
+        <form method="get" asp-action="Registar" class="row g-2 align-items-end">
+            <input type="hidden" name="paiolId" value="@Model.PaiolId" />
+            <div class="col-12 col-md-2">
+                <label class="form-label small text-muted">Classificação de Risco</label>
+                <select name="classificacao" class="form-select form-select-sm">
+                    <option value="">— Todas —</option>
+                    @foreach (var c in ConstantesCatalogo.ClassificacoesRisco)
+                    {
+                        <option value="@c" selected="@(classificacao == c)">@ConstantesCatalogo.TextoClassificacao(c)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label small text-muted">Filtro técnico</label>
+                <select name="filtroTecnico" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var f in ConstantesCatalogo.FiltrosTecnicos)
+                    {
+                        <option value="@f.Value" selected="@(filtroTecnico == f.Value)">@f.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label small text-muted">Calibre</label>
+                <select name="calibre" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var cal in ConstantesCatalogo.Calibres)
+                    {
+                        <option value="@cal.Value" selected="@(calibre == cal.Value)">@cal.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">Aplicar filtros</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Registar" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="PaiolId" class="form-label"></label>
+                <select asp-for="PaiolId" class="form-select" asp-items="@(ViewData["PaiolId"] as SelectList)">
+                    <option value="">-- Escolher paiol --</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ProdutoId" class="form-label"></label>
+                <select asp-for="ProdutoId" class="form-select" asp-items="@(ViewData["ProdutoId"] as SelectList)">
+                    <option value="">-- Escolher produto --</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Quantidade" class="form-label"></label>
+                <input asp-for="Quantidade" class="form-control" step="0.0001" />
+                <span asp-validation-for="Quantidade" class="text-danger"></span>
+                <small class="text-muted">Ex.: 10 caixas → o sistema calcula o NEM total (quantidade × NEM por unidade do produto).</small>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Registar entrada</button>
+                <a asp-controller="Paiol" asp-action="Movimentos" asp-route-tipo="Entradas" class="btn btn-secondary">Movimentos</a>
+                <a asp-controller="Paiol" asp-action="Index" class="btn btn-outline-secondary">Armazém</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
