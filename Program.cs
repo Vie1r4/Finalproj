@@ -18,7 +18,8 @@ builder.Services.AddDbContext<FinalprojContext>(options =>
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = true;
+    // [CONFIRMAÇÃO EMAIL] Para testes: comentado para não exigir confirmação por email. Para reativar, descomentar a linha abaixo.
+    // options.SignIn.RequireConfirmedAccount = true;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;

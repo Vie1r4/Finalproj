@@ -56,13 +56,14 @@ namespace Finalproj.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                     return LocalRedirect(returnUrl);
 
-                var user = await _userManager.FindByNameAsync(Input.UserName);
-                if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
-                {
-                    ModelState.AddModelError(string.Empty, "Deve confirmar o seu email antes de iniciar sessão.");
-                    ViewData["EmailNaoConfirmado"] = user.Email;
-                    return Page();
-                }
+                // [CONFIRMAÇÃO EMAIL] Para testes: bloco comentado para permitir login sem confirmar email. Para reativar, descomentar até ao fim do bloco.
+                // var user = await _userManager.FindByNameAsync(Input.UserName);
+                // if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
+                // {
+                //     ModelState.AddModelError(string.Empty, "Deve confirmar o seu email antes de iniciar sessão.");
+                //     ViewData["EmailNaoConfirmado"] = user.Email;
+                //     return Page();
+                // }
 
                 if (result.IsLockedOut)
                 {
