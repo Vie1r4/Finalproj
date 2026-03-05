@@ -4,6 +4,7 @@ namespace Finalproj.Models;
 
 /// <summary>
 /// Valores fixos do contrato do paiol (Class 3 – validações e opções de formulário).
+/// Alinhado ao PROMPT_Motor_Validacao_Paiol: tipos de paiol, divisões e grupos autorizados na licença.
 /// </summary>
 public static class ConstantesPaiol
 {
@@ -12,6 +13,21 @@ public static class ConstantesPaiol
 
     /// <summary> Famílias de risco para produtos (inclui 1.4S). </summary>
     public static readonly string[] FamiliasRiscoProduto = { "1.1", "1.2", "1.3", "1.4", "1.4S", "1.5", "1.6" };
+
+    /// <summary> Tipos de paiol (PSP). Se vazio ou legado, usa Perfil de Risco. </summary>
+    public static readonly (string Value, string Text)[] TiposPaiol =
+    {
+        ("PERMANENTE_GERAL", "Permanente geral (armazenagem geral)"),
+        ("PERMANENTE_AUXILIAR", "Permanente auxiliar (apoio a operações)"),
+        ("PROVISORIO_EVENTO", "Provisório para evento (temporário no local)"),
+        ("DEPOSITO_TRANSITO", "Depósito de trânsito (máx. 24h)")
+    };
+
+    /// <summary> Divisões para licença (1.3, 1.4, 1.4S = pirotecnia eventos). </summary>
+    public static readonly string[] DivisoesLicenca = { "1.1", "1.2", "1.3", "1.4", "1.4S" };
+
+    /// <summary> Grupos para licença (G, S = maioria dos artigos de eventos). </summary>
+    public static readonly string[] GruposLicenca = { "B", "C", "D", "G", "S" };
 
     /// <summary> Estados do paiol: Ativo pode receber carga; Em Manutenção bloqueado. </summary>
     public static readonly string[] Estados = { "Ativo", "Em Manutenção" };
@@ -38,5 +54,18 @@ public static class ConstantesPaiol
             Value = v,
             Text = v == "1.4S" ? v : v + "G"
         }).ToList();
+    }
+
+    public static List<SelectListItem> TiposPaiolParaDropdown()
+    {
+        return TiposPaiol.Select(x => new SelectListItem { Value = x.Value, Text = x.Text }).ToList();
+    }
+
+    /// <summary> Texto do tipo de paiol para exibição. </summary>
+    public static string TextoTipoPaiol(string? valor)
+    {
+        if (string.IsNullOrEmpty(valor)) return "—";
+        var item = TiposPaiol.FirstOrDefault(t => t.Value == valor);
+        return item.Text ?? valor;
     }
 }

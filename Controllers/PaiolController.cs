@@ -35,6 +35,48 @@ namespace Finalproj.Controllers
                 .ToListAsync();
         }
 
+        /// <summary>Calcula MLE atual e percentagem de ocupação por paiol (para listagens).</summary>
+        private async Task<Dictionary<int, (decimal MleAtual, decimal PercentagemOcupacao)>> CalcularOcupacaoPorPaiolAsync(IEnumerable<Paiol> paióis)
+        {
+            var ids = paióis.Select(p => p.Id).ToList();
+            if (ids.Count == 0)
+                return new Dictionary<int, (decimal, decimal)>();
+
+            var limitePorPaiol = paióis.ToDictionary(p => p.Id, p => p.LimiteMLE);
+            var entradas = await _context.EntradasPaiol
+                .Where(e => ids.Contains(e.PaiolId))
+                .Include(e => e.Produto)
+                .ToListAsync();
+            var saidas = await _context.SaidasPaiol
+                .Where(s => ids.Contains(s.PaiolId))
+                .ToListAsync();
+
+            var result = new Dictionary<int, (decimal, decimal)>();
+            foreach (var id in ids)
+            {
+                var entradasPaiol = entradas.Where(e => e.PaiolId == id).ToList();
+                var saidasPaiol = saidas.Where(s => s.PaiolId == id).ToList();
+                var stockPorProduto = entradasPaiol
+                    .GroupBy(e => e.ProdutoId)
+                    .ToDictionary(g => g.Key, g => g.Sum(e => e.Quantidade));
+                foreach (var s in saidasPaiol)
+                {
+                    if (stockPorProduto.ContainsKey(s.ProdutoId))
+                        stockPorProduto[s.ProdutoId] -= s.Quantidade;
+                }
+                decimal mleAtual = 0;
+                foreach (var kv in stockPorProduto.Where(kv => kv.Value > 0))
+                {
+                    var prod = entradasPaiol.First(e => e.ProdutoId == kv.Key).Produto;
+                    mleAtual += kv.Value * prod.NEMPorUnidade;
+                }
+                var limite = limitePorPaiol[id];
+                var percentagem = limite > 0 ? mleAtual / limite * 100 : 0;
+                result[id] = (mleAtual, percentagem);
+            }
+            return result;
+        }
+
         // GET: Paiol — página operacional: lista de paióis com acesso (Detalhes, Adicionar, Retirar)
         public async Task<IActionResult> Index()
         {
@@ -43,6 +85,67 @@ namespace Finalproj.Controllers
                 .Where(p => idsAcesso.Contains(p.Id))
                 .OrderBy(p => p.Nome)
                 .ToListAsync();
+            var ocupacao = await CalcularOcupacaoPorPaiolAsync(lista);
+            var viewModel = lista.Select(p => new PaiolComOcupacaoViewModel
+            {
+                Paiol = p,
+                MleAtual = ocupacao.GetValueOrDefault(p.Id).MleAtual,
+                PercentagemOcupacao = ocupacao.GetValueOrDefault(p.Id).PercentagemOcupacao
+            }).ToList();
+            return View(viewModel);
+        }
+
+        /// <summary>Stock físico (entradas - saídas) por produto, apenas nos paióis com acesso.</summary>
+        private async Task<Dictionary<int, decimal>> ObterStockFisicoPorProdutoAsync(List<int> idsPaióis)
+        {
+            if (idsPaióis.Count == 0)
+                return new Dictionary<int, decimal>();
+
+            var entradas = await _context.EntradasPaiol
+                .Where(e => idsPaióis.Contains(e.PaiolId))
+                .GroupBy(e => e.ProdutoId)
+                .Select(g => new { ProdutoId = g.Key, Total = g.Sum(e => e.Quantidade) })
+                .ToListAsync();
+            var saidas = await _context.SaidasPaiol
+                .Where(s => idsPaióis.Contains(s.PaiolId))
+                .GroupBy(s => s.ProdutoId)
+                .Select(g => new { ProdutoId = g.Key, Total = g.Sum(s => s.Quantidade) })
+                .ToListAsync();
+
+            var resultado = new Dictionary<int, decimal>();
+            foreach (var e in entradas)
+                resultado[e.ProdutoId] = e.Total;
+            foreach (var s in saidas)
+                resultado[s.ProdutoId] = resultado.GetValueOrDefault(s.ProdutoId) - s.Total;
+            return resultado;
+        }
+
+        /// <summary>Catálogo com quantidade em stock (igual ao catálogo mas com coluna Stock nos paióis com acesso).</summary>
+        public async Task<IActionResult> Stock(string? pesquisa, string? classificacao, string? grupoCompatibilidade, string? filtroTecnico, string? calibre)
+        {
+            ViewData["Pesquisa"] = pesquisa;
+            ViewData["Classificacao"] = classificacao;
+            ViewData["GrupoCompatibilidade"] = grupoCompatibilidade;
+            ViewData["FiltroTecnico"] = filtroTecnico;
+            ViewData["Calibre"] = calibre;
+
+            var idsAcesso = await ObterPaiolIdsComAcessoAsync();
+            var stockPorProduto = await ObterStockFisicoPorProdutoAsync(idsAcesso);
+
+            var query = _context.Produtos.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(pesquisa))
+                query = query.Where(p => p.Nome.Contains(pesquisa));
+            if (!string.IsNullOrEmpty(classificacao))
+                query = query.Where(p => p.FamiliaRisco == classificacao);
+            if (!string.IsNullOrEmpty(grupoCompatibilidade))
+                query = query.Where(p => p.GrupoCompatibilidade == grupoCompatibilidade);
+            if (!string.IsNullOrEmpty(filtroTecnico))
+                query = query.Where(p => p.FiltroTecnico == filtroTecnico);
+            if (!string.IsNullOrEmpty(calibre))
+                query = query.Where(p => p.Calibre == calibre);
+
+            var lista = await query.OrderBy(p => p.Nome).ToListAsync();
+            ViewData["StockPorProduto"] = stockPorProduto;
             return View(lista);
         }
 
@@ -88,6 +191,15 @@ namespace Finalproj.Controllers
                 var saidas = await query.OrderByDescending(s => s.DataSaida).ToListAsync();
                 ViewData["Entradas"] = new List<EntradaPaiol>();
                 ViewData["Saidas"] = saidas;
+
+                var userIds = saidas.Where(s => !string.IsNullOrEmpty(s.FuncionarioRetirouUserId)).Select(s => s.FuncionarioRetirouUserId!).Distinct().ToList();
+                var nomesSaidas = new Dictionary<string, string>();
+                foreach (var uid in userIds)
+                {
+                    var u = await _userManager.FindByIdAsync(uid);
+                    nomesSaidas[uid] = u?.UserName ?? uid;
+                }
+                ViewData["NomesUtilizadoresSaidas"] = nomesSaidas;
             }
 
             return View();
@@ -97,7 +209,15 @@ namespace Finalproj.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Gestao()
         {
-            return View(await _context.Paiol.OrderBy(p => p.Nome).ToListAsync());
+            var lista = await _context.Paiol.OrderBy(p => p.Nome).ToListAsync();
+            var ocupacao = await CalcularOcupacaoPorPaiolAsync(lista);
+            var viewModel = lista.Select(p => new PaiolComOcupacaoViewModel
+            {
+                Paiol = p,
+                MleAtual = ocupacao.GetValueOrDefault(p.Id).MleAtual,
+                PercentagemOcupacao = ocupacao.GetValueOrDefault(p.Id).PercentagemOcupacao
+            }).ToList();
+            return View(viewModel);
         }
 
         // GET: Paiol/Conteudo/5 — conteúdo do paiol (itens em stock); retirar por item (Class 4: navegação)
@@ -133,7 +253,7 @@ namespace Finalproj.Controllers
                 .Select(kv =>
                 {
                     var p = produtos.GetValueOrDefault(kv.Key);
-                    return p == null ? null : new CargaPaiolItem { ProdutoId = p.Id, ProdutoNome = p.Nome, Quantidade = kv.Value, NEMPorUnidade = p.NEMPorUnidade };
+                    return p == null ? null : new CargaPaiolItem { ProdutoId = p.Id, ProdutoNome = p.Nome, Quantidade = kv.Value, NEMPorUnidade = p.NEMPorUnidade, Divisao = p.FamiliaRisco ?? "" };
                 })
                 .Where(x => x != null)
                 .Cast<CargaPaiolItem>()
@@ -176,7 +296,7 @@ namespace Finalproj.Controllers
                 .Select(kv =>
                 {
                     var p = produtos.GetValueOrDefault(kv.Key);
-                    return p == null ? null : new CargaPaiolItem { ProdutoId = p.Id, ProdutoNome = p.Nome, Quantidade = kv.Value, NEMPorUnidade = p.NEMPorUnidade };
+                    return p == null ? null : new CargaPaiolItem { ProdutoId = p.Id, ProdutoNome = p.Nome, Quantidade = kv.Value, NEMPorUnidade = p.NEMPorUnidade, Divisao = p.FamiliaRisco ?? "" };
                 })
                 .Where(x => x != null)
                 .Cast<CargaPaiolItem>()
@@ -194,6 +314,7 @@ namespace Finalproj.Controllers
         public IActionResult Create()
         {
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text");
+            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text");
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             return View();
@@ -203,7 +324,7 @@ namespace Finalproj.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado")] Paiol paiol, string[]? CargosAcesso)
+        public async Task<IActionResult> Create([Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,TipoPaiol,NumeroLicenca,DataValidadeLicenca,DivisoesAutorizadas,GruposAutorizados,DataInicio,DataFim")] Paiol paiol, string[]? CargosAcesso)
         {
             if (ModelState.IsValid)
             {
@@ -211,6 +332,7 @@ namespace Finalproj.Controllers
                 {
                     ModelState.AddModelError(string.Empty, "Perfil de risco ou estado inválido.");
                     ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
+                    ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
                     ViewData["Estados"] = ConstantesPaiol.Estados;
                     ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
                     return View(paiol);
@@ -229,6 +351,7 @@ namespace Finalproj.Controllers
                 return RedirectToAction(nameof(Gestao));
             }
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
+            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             return View(paiol);
@@ -247,6 +370,7 @@ namespace Finalproj.Controllers
 
             var acessos = await _context.PaiolAcessos.Where(a => a.PaiolId == id).Select(a => a.RoleName).ToListAsync();
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
+            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             ViewData["CargosSelecionados"] = acessos;
@@ -257,7 +381,7 @@ namespace Finalproj.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado")] Paiol paiol, string[]? CargosAcesso)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,TipoPaiol,NumeroLicenca,DataValidadeLicenca,DivisoesAutorizadas,GruposAutorizados,DataInicio,DataFim")] Paiol paiol, string[]? CargosAcesso)
         {
             if (id != paiol.Id)
                 return NotFound();
@@ -291,6 +415,7 @@ namespace Finalproj.Controllers
             }
             var acessos = await _context.PaiolAcessos.Where(a => a.PaiolId == id).Select(a => a.RoleName).ToListAsync();
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
+            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             ViewData["CargosSelecionados"] = acessos;

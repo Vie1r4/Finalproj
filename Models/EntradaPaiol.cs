@@ -23,4 +23,17 @@ public class EntradaPaiol
 
     [Display(Name = "Data de entrada")]
     public DateTime DataEntrada { get; set; } = DateTime.UtcNow;
+
+    /// <summary> Número de lote (batch) para rastreabilidade e FIFO. </summary>
+    [StringLength(50)]
+    [Display(Name = "N.º de lote")]
+    public string? NumeroLote { get; set; }
+
+    [Display(Name = "Data de fabrico")]
+    [DataType(DataType.Date)]
+    public DateTime? DataFabrico { get; set; }
+
+    [Display(Name = "Data de validade")]
+    [DataType(DataType.Date)]
+    public DateTime? DataValidade { get; set; }
 }

@@ -1,0 +1,22 @@
+@model Finalproj.Models.Funcionario
+@{
+    ViewData["Title"] = "Eliminar funcionário";
+}
+
+<h1 class="mb-3">Eliminar funcionário</h1>
+<div class="alert alert-warning" role="alert">
+    Tem a certeza que deseja eliminar este funcionário? Esta ação não pode ser revertida.
+</div>
+<dl class="row border rounded p-3 bg-light">
+    <dt class="col-sm-3">Nome</dt>
+    <dd class="col-sm-9">@Model.NomeCompleto</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "—")</dd>
+    <dt class="col-sm-3">Cargo</dt>
+    <dd class="col-sm-9">@(Model.Cargo ?? "—")</dd>
+</dl>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Sim, eliminar</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+</form>

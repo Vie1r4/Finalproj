@@ -17,25 +17,50 @@ public static class ConstantesCatalogo
         return valor == "1.4S" ? valor : valor + "G";
     }
 
+    /// <summary> Grupos de compatibilidade ADR (B,C,D,G,S). Determinam co-armazenamento no paiol (matriz 7.2.5). </summary>
+    public static readonly (string Value, string Text)[] GruposCompatibilidade =
+    {
+        ("G", "G — Artigos pirotécnicos (foguetes, morteiros, F3/F4)"),
+        ("S", "S — Artigos muito seguros (F1/F2)"),
+        ("C", "C — Pólvoras / propulsoras"),
+        ("B", "B — Iniciadores (detonadores, espoletas)"),
+        ("D", "D — Explosivos secundários sem espoleta")
+    };
+
+    public static string TextoGrupoCompatibilidade(string? valor)
+    {
+        if (string.IsNullOrEmpty(valor)) return "—";
+        var item = GruposCompatibilidade.FirstOrDefault(g => g.Value == valor);
+        return item.Text ?? valor;
+    }
+
+    public static List<SelectListItem> GruposParaDropdown()
+    {
+        return GruposCompatibilidade.Select(x => new SelectListItem { Value = x.Value, Text = x.Text }).ToList();
+    }
+
     /// <summary> Filtros técnicos (tipo de material). Value = código guardado na BD. </summary>
     public static readonly (string Value, string Text)[] FiltrosTecnicos =
     {
         ("Baterias", "Baterias (Cakes)"),
         ("BombasArremesso", "Bombas de Arremesso (Shells)"),
+        ("Morteiros", "Morteiros (Mortars)"),
         ("Foguetes", "Foguetes (Rockets)"),
+        ("Cascatas", "Cascatas / Fontes"),
+        ("Bengalas", "Bengalas (Sparklers)"),
         ("Candelas", "Candelas (Roman Candles)"),
         ("Monotiros", "Monotiros (Single Shots)"),
-        ("GerbsVulcoes", "Gerbs/Vulcões")
+        ("GerbsVulcoes", "Gerbs / Vulcões")
     };
 
     /// <summary> Calibres. Value = código guardado na BD. </summary>
     public static readonly (string Value, string Text)[] Calibres =
     {
-        ("MuitoPequeno", "< 20mm (Muito pequeno)"),
-        ("BateriasPadrao", "20mm - 30mm (Baterias padrão)"),
-        ("BombasPequenas", "50mm - 75mm (Bombas pequenas)"),
-        ("BombasMedias", "100mm - 125mm (Bombas médias - 4\" a 5\")"),
-        ("BombasGrandes", "> 150mm (Bombas grandes - 6\"+)")
+        ("MuitoPequeno", "< 20 mm (muito pequeno)"),
+        ("BateriasPadrao", "20–30 mm (baterias padrão)"),
+        ("BombasPequenas", "50–75 mm (bombas pequenas)"),
+        ("BombasMedias", "100–125 mm (bombas médias, 4\"–5\")"),
+        ("BombasGrandes", "> 150 mm (bombas grandes, 6\"+)")
     };
 
     public static List<SelectListItem> FiltrosTecnicosParaDropdown()

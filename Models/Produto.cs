@@ -39,4 +39,9 @@ public class Produto
     [StringLength(30)]
     [Display(Name = "Calibre")]
     public string? Calibre { get; set; }
+
+    /// <summary> Grupo de compatibilidade ADR (B, C, D, G, S). Define com que outros produtos pode coexistir no paiol. </summary>
+    [StringLength(5)]
+    [Display(Name = "Grupo de compatibilidade")]
+    public string? GrupoCompatibilidade { get; set; }
 }

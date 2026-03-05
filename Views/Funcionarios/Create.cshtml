@@ -1,0 +1,115 @@
+@model Finalproj.Models.Funcionario
+@{
+    ViewData["Title"] = "Adicionar funcionário";
+}
+
+<h1 class="mb-3">Adicionar funcionário</h1>
+<p class="text-muted mb-4">Preencha os dados do colaborador. Os campos marcados com <span class="text-danger">*</span> são obrigatórios.</p>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Identificação e contacto</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="NomeCompleto" class="form-label"></label> <span class="text-danger">*</span>
+                <input asp-for="NomeCompleto" class="form-control" placeholder="Nome completo" />
+                <span asp-validation-for="NomeCompleto" class="text-danger small"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NIF" class="form-label"></label>
+                    <input asp-for="NIF" class="form-control" maxlength="9" placeholder="9 dígitos" />
+                    <span asp-validation-for="NIF" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DataNascimento" class="form-label"></label>
+                    <input asp-for="DataNascimento" class="form-control" type="date" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="exemplo@email.com" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Telefone" class="form-label"></label>
+                    <input asp-for="Telefone" class="form-control" placeholder="Telefone" />
+                    <span asp-validation-for="Telefone" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Morada</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Morada" class="form-label"></label>
+                <input asp-for="Morada" class="form-control" placeholder="Morada" />
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="CodigoPostal" class="form-label"></label>
+                    <input asp-for="CodigoPostal" class="form-control" placeholder="Código-postal" />
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label asp-for="Localidade" class="form-label"></label>
+                    <input asp-for="Localidade" class="form-control" placeholder="Localidade" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Dados profissionais</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Cargo" class="form-label"></label>
+                    <select asp-for="Cargo" class="form-select" asp-items="@ViewBag.Cargo">
+                        <option value="">— Selecionar —</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DataAdmissao" class="form-label"></label>
+                    <input asp-for="DataAdmissao" class="form-control" type="date" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DataSaida" class="form-label"></label>
+                <input asp-for="DataSaida" class="form-control" type="date" />
+                <span asp-validation-for="DataSaida" class="text-danger small"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NumeroSegurancaSocial" class="form-label"></label>
+                    <input asp-for="NumeroSegurancaSocial" class="form-control" placeholder="N.º Segurança Social" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="IBAN" class="form-label"></label>
+                    <input asp-for="IBAN" class="form-control" placeholder="IBAN" />
+                </div>
+            </div>
+            <div class="mb-0">
+                <label asp-for="Notas" class="form-label"></label> <span class="text-muted small">(opcional)</span>
+                <textarea asp-for="Notas" class="form-control" rows="2" placeholder="Notas ou observações"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

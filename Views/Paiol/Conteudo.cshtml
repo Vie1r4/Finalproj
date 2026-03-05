@@ -15,10 +15,12 @@
 
 @if (carga.Any())
 {
+    <p class="text-muted small">Ocupação do paiol = soma da NEM de todos os produtos. A divisão serve para compatibilidade; 1 kg NEM ocupa sempre 1 kg de capacidade (legislação portuguesa).</p>
     <table class="table">
         <thead>
             <tr>
                 <th>Produto</th>
+                <th>Divisão de risco</th>
                 <th>Quantidade</th>
                 <th>NEM (kg)</th>
                 <th></th>
@@ -29,6 +31,7 @@
             {
                 <tr>
                     <td>@x.ProdutoNome</td>
+                    <td>@(string.IsNullOrEmpty(x.Divisao) ? "—" : x.Divisao)</td>
                     <td>@x.Quantidade.ToString("N2")</td>
                     <td>@x.NEMTotal.ToString("N2")</td>
                     <td>

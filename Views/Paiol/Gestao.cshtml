@@ -1,4 +1,4 @@
-@model IEnumerable<Finalproj.Models.Paiol>
+@model IEnumerable<Finalproj.Models.PaiolComOcupacaoViewModel>
 
 @{
     ViewData["Title"] = "Gestão de Paióis";
@@ -16,10 +16,11 @@
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.Nome)</th>
-            <th>@Html.DisplayNameFor(model => model.Localizacao)</th>
-            <th>@Html.DisplayNameFor(model => model.LimiteMLE)</th>
+            <th>@Html.DisplayNameFor(model => model.Paiol.Nome)</th>
+            <th>@Html.DisplayNameFor(model => model.Paiol.Localizacao)</th>
+            <th>@Html.DisplayNameFor(model => model.Paiol.LimiteMLE)</th>
             <th>Perfil de Risco</th>
+            <th>Ocupação</th>
             <th>Estado</th>
             <th></th>
         </tr>
@@ -27,16 +28,22 @@
     <tbody>
         @foreach (var item in Model)
         {
+            var p = item.Paiol;
+            var pct = item.PercentagemOcupacao;
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Nome)</td>
-                <td>@Html.DisplayFor(modelItem => item.Localizacao)</td>
-                <td>@Html.DisplayFor(modelItem => item.LimiteMLE) kg</td>
-                <td>@item.PerfilRisco</td>
-                <td>@item.Estado</td>
+                <td>@Html.DisplayFor(m => p.Nome)</td>
+                <td>@Html.DisplayFor(m => p.Localizacao)</td>
+                <td>@Html.DisplayFor(m => p.LimiteMLE) kg</td>
+                <td>@p.PerfilRisco</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
-                    <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
-                    <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                    <span class="fw-medium">@item.MleAtual.ToString("N1")</span> / @p.LimiteMLE.ToString("N0") kg
+                    <span class="text-muted">(@pct.ToString("N0")%)</span>
+                </td>
+                <td>@p.Estado</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@p.Id">Editar</a> |
+                    <a asp-action="Details" asp-route-id="@p.Id">Detalhes</a> |
+                    <a asp-action="Delete" asp-route-id="@p.Id">Eliminar</a>
                 </td>
             </tr>
         }

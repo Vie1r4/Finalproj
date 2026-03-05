@@ -41,6 +41,36 @@
                 </select>
                 <span asp-validation-for="Estado" class="text-danger"></span>
             </div>
+            <div class="form-group mb-2">
+                <label asp-for="TipoPaiol" class="control-label"></label>
+                <select asp-for="TipoPaiol" class="form-select" asp-items="@(ViewData["TiposPaiol"] as SelectList)">
+                    <option value="">— Opcional —</option>
+                </select>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="NumeroLicenca" class="control-label"></label>
+                <input asp-for="NumeroLicenca" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="DataValidadeLicenca" class="control-label"></label>
+                <input asp-for="DataValidadeLicenca" class="form-control" type="date" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="DivisoesAutorizadas" class="control-label"></label>
+                <input asp-for="DivisoesAutorizadas" class="form-control" placeholder="1.3, 1.4, 1.4S" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="GruposAutorizados" class="control-label"></label>
+                <input asp-for="GruposAutorizados" class="form-control" placeholder="G, S" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="DataInicio" class="control-label"></label>
+                <input asp-for="DataInicio" class="form-control" type="date" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="DataFim" class="control-label"></label>
+                <input asp-for="DataFim" class="form-control" type="date" />
+            </div>
             <div class="form-group mb-3">
                 <label class="control-label">Cargos com acesso a este paiol</label>
                 <p class="text-muted small">Altera quais os cargos que podem registar entrada neste paiol.</p>

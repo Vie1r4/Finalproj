@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Tutorial Class 8: "sem sessão não navega" – exigir autenticação em todo o site por defeito; Login/Register com [AllowAnonymous].
+// Exigir autenticação em todo o site por defeito; Login/Register com [AllowAnonymous].
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AuthorizeFilter());
@@ -30,6 +30,15 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, Finalproj.Services.EmailSender>();
+builder.Services.AddScoped<Finalproj.Services.ILogSistemaService, Finalproj.Services.LogSistemaService>();
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -63,6 +72,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

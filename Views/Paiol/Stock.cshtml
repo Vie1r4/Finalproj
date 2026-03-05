@@ -1,0 +1,111 @@
+@model IEnumerable<Finalproj.Models.Produto>
+@using Finalproj.Models
+@{
+    ViewData["Title"] = "Stock";
+    var pesquisa = ViewData["Pesquisa"] as string ?? "";
+    var classificacao = ViewData["Classificacao"] as string ?? "";
+    var grupoCompatibilidade = ViewData["GrupoCompatibilidade"] as string ?? "";
+    var filtroTecnico = ViewData["FiltroTecnico"] as string ?? "";
+    var calibre = ViewData["Calibre"] as string ?? "";
+    var stockPorProduto = ViewData["StockPorProduto"] as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Stock</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar ao Armazém</a>
+</div>
+
+<p class="text-muted mb-3">Catálogo de produtos com a quantidade em stock nos paióis a que tem acesso. Utilize os filtros para refinar a lista.</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Stock" class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label small text-muted">Pesquisar por nome</label>
+                <input type="text" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome do produto..." />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Classificação de risco</label>
+                <select name="classificacao" class="form-select">
+                    <option value="">— Todas —</option>
+                    @foreach (var c in ConstantesCatalogo.ClassificacoesRisco)
+                    {
+                        <option value="@c" selected="@(classificacao == c)">@ConstantesCatalogo.TextoClassificacao(c)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Grupo ADR</label>
+                <select name="grupoCompatibilidade" class="form-select">
+                    <option value="">— Todos —</option>
+                    @foreach (var g in ConstantesCatalogo.GruposCompatibilidade)
+                    {
+                        <option value="@g.Value" selected="@(grupoCompatibilidade == g.Value)">@g.Value</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Filtro técnico</label>
+                <select name="filtroTecnico" class="form-select">
+                    <option value="">— Todos —</option>
+                    @foreach (var f in ConstantesCatalogo.FiltrosTecnicos)
+                    {
+                        <option value="@f.Value" selected="@(filtroTecnico == f.Value)">@f.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Calibre</label>
+                <select name="calibre" class="form-select">
+                    <option value="">— Todos —</option>
+                    @foreach (var cal in ConstantesCatalogo.Calibres)
+                    {
+                        <option value="@cal.Value" selected="@(calibre == cal.Value)">@cal.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-1">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+            </div>
+        </form>
+        <div class="mt-2">
+            <a asp-action="Stock" class="small text-muted">Limpar filtros</a>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Classificação de risco</th>
+                <th>Grupo</th>
+                <th>Filtro técnico</th>
+                <th>Calibre</th>
+                <th>NEM/unidade (kg)</th>
+                <th class="text-end">Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var qtd = stockPorProduto.GetValueOrDefault(item.Id, 0);
+                <tr>
+                    <td>@item.Nome</td>
+                    <td>@ConstantesCatalogo.TextoClassificacao(item.FamiliaRisco)</td>
+                    <td>@(item.GrupoCompatibilidade ?? "—")</td>
+                    <td>@ConstantesCatalogo.TextoFiltroTecnico(item.FiltroTecnico)</td>
+                    <td>@ConstantesCatalogo.TextoCalibre(item.Calibre)</td>
+                    <td>@item.NEMPorUnidade.ToString("N2")</td>
+                    <td class="text-end fw-semibold">@qtd.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Nenhum produto encontrado. Ajuste os filtros.</p>
+}

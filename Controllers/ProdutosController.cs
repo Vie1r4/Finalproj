@@ -20,11 +20,12 @@ namespace Finalproj.Controllers
             _context = context;
         }
 
-        /// <summary> Catálogo com barra de pesquisa e filtros (classificação, filtro técnico, calibre). Lista todos os produtos. </summary>
-        public async Task<IActionResult> Index(string? pesquisa, string? classificacao, string? filtroTecnico, string? calibre)
+        /// <summary> Catálogo com barra de pesquisa e filtros (classificação, grupo, filtro técnico, calibre). </summary>
+        public async Task<IActionResult> Index(string? pesquisa, string? classificacao, string? grupoCompatibilidade, string? filtroTecnico, string? calibre)
         {
             ViewData["Pesquisa"] = pesquisa;
             ViewData["Classificacao"] = classificacao;
+            ViewData["GrupoCompatibilidade"] = grupoCompatibilidade;
             ViewData["FiltroTecnico"] = filtroTecnico;
             ViewData["Calibre"] = calibre;
 
@@ -33,6 +34,8 @@ namespace Finalproj.Controllers
                 query = query.Where(p => p.Nome.Contains(pesquisa));
             if (!string.IsNullOrEmpty(classificacao))
                 query = query.Where(p => p.FamiliaRisco == classificacao);
+            if (!string.IsNullOrEmpty(grupoCompatibilidade))
+                query = query.Where(p => p.GrupoCompatibilidade == grupoCompatibilidade);
             if (!string.IsNullOrEmpty(filtroTecnico))
                 query = query.Where(p => p.FiltroTecnico == filtroTecnico);
             if (!string.IsNullOrEmpty(calibre))
@@ -42,11 +45,12 @@ namespace Finalproj.Controllers
             return View(lista);
         }
 
-        /// <summary> Gerir produtos com o mesmo sistema de subdivisão do catálogo (Class 3 – listagem filtrada). </summary>
-        public async Task<IActionResult> Gerir(string? pesquisa, string? classificacao, string? filtroTecnico, string? calibre)
+        /// <summary> Gerir produtos com o mesmo sistema de subdivisão do catálogo. </summary>
+        public async Task<IActionResult> Gerir(string? pesquisa, string? classificacao, string? grupoCompatibilidade, string? filtroTecnico, string? calibre)
         {
             ViewData["Pesquisa"] = pesquisa ?? "";
             ViewData["Classificacao"] = classificacao ?? "";
+            ViewData["GrupoCompatibilidade"] = grupoCompatibilidade ?? "";
             ViewData["FiltroTecnico"] = filtroTecnico ?? "";
             ViewData["Calibre"] = calibre ?? "";
 
@@ -55,6 +59,8 @@ namespace Finalproj.Controllers
                 query = query.Where(p => p.Nome.Contains(pesquisa));
             if (!string.IsNullOrEmpty(classificacao))
                 query = query.Where(p => p.FamiliaRisco == classificacao);
+            if (!string.IsNullOrEmpty(grupoCompatibilidade))
+                query = query.Where(p => p.GrupoCompatibilidade == grupoCompatibilidade);
             if (!string.IsNullOrEmpty(filtroTecnico))
                 query = query.Where(p => p.FiltroTecnico == filtroTecnico);
             if (!string.IsNullOrEmpty(calibre))
@@ -76,6 +82,7 @@ namespace Finalproj.Controllers
         public IActionResult Create()
         {
             ViewData["FamiliaRisco"] = new SelectList(ConstantesPaiol.FamiliasParaDropdown(), "Value", "Text");
+            ViewData["GrupoCompatibilidade"] = new SelectList(ConstantesCatalogo.GruposParaDropdown(), "Value", "Text");
             ViewData["FiltroTecnico"] = new SelectList(ConstantesCatalogo.FiltrosTecnicosParaDropdown(), "Value", "Text");
             ViewData["Calibre"] = new SelectList(ConstantesCatalogo.CalibresParaDropdown(), "Value", "Text");
             return View();
@@ -84,7 +91,7 @@ namespace Finalproj.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Nome,NEMPorUnidade,FamiliaRisco,FiltroTecnico,Calibre")] Produto produto)
+        public async Task<IActionResult> Create([Bind("Nome,NEMPorUnidade,FamiliaRisco,GrupoCompatibilidade,FiltroTecnico,Calibre")] Produto produto)
         {
             if (ModelState.IsValid)
             {
@@ -93,6 +100,7 @@ namespace Finalproj.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["FamiliaRisco"] = new SelectList(ConstantesPaiol.FamiliasParaDropdown(), "Value", "Text", produto.FamiliaRisco);
+            ViewData["GrupoCompatibilidade"] = new SelectList(ConstantesCatalogo.GruposParaDropdown(), "Value", "Text", produto.GrupoCompatibilidade);
             ViewData["FiltroTecnico"] = new SelectList(ConstantesCatalogo.FiltrosTecnicosParaDropdown(), "Value", "Text", produto.FiltroTecnico);
             ViewData["Calibre"] = new SelectList(ConstantesCatalogo.CalibresParaDropdown(), "Value", "Text", produto.Calibre);
             return View(produto);
@@ -104,6 +112,7 @@ namespace Finalproj.Controllers
             var produto = await _context.Produtos.FindAsync(id);
             if (produto == null) return NotFound();
             ViewData["FamiliaRisco"] = new SelectList(ConstantesPaiol.FamiliasParaDropdown(), "Value", "Text", produto.FamiliaRisco);
+            ViewData["GrupoCompatibilidade"] = new SelectList(ConstantesCatalogo.GruposParaDropdown(), "Value", "Text", produto.GrupoCompatibilidade);
             ViewData["FiltroTecnico"] = new SelectList(ConstantesCatalogo.FiltrosTecnicosParaDropdown(), "Value", "Text", produto.FiltroTecnico);
             ViewData["Calibre"] = new SelectList(ConstantesCatalogo.CalibresParaDropdown(), "Value", "Text", produto.Calibre);
             return View(produto);
@@ -111,7 +120,7 @@ namespace Finalproj.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,NEMPorUnidade,FamiliaRisco,Unidade,FiltroTecnico,Calibre")] Produto produto)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,NEMPorUnidade,FamiliaRisco,Unidade,GrupoCompatibilidade,FiltroTecnico,Calibre")] Produto produto)
         {
             if (id != produto.Id) return NotFound();
             if (ModelState.IsValid)
@@ -130,6 +139,7 @@ namespace Finalproj.Controllers
                 return RedirectToAction(nameof(Gerir));
             }
             ViewData["FamiliaRisco"] = new SelectList(ConstantesPaiol.FamiliasParaDropdown(), "Value", "Text", produto.FamiliaRisco);
+            ViewData["GrupoCompatibilidade"] = new SelectList(ConstantesCatalogo.GruposParaDropdown(), "Value", "Text", produto.GrupoCompatibilidade);
             ViewData["FiltroTecnico"] = new SelectList(ConstantesCatalogo.FiltrosTecnicosParaDropdown(), "Value", "Text", produto.FiltroTecnico);
             ViewData["Calibre"] = new SelectList(ConstantesCatalogo.CalibresParaDropdown(), "Value", "Text", produto.Calibre);
             return View(produto);

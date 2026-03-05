@@ -1,0 +1,157 @@
+@model Finalproj.Models.Encomenda
+@using Finalproj.Models
+@{
+    ViewData["Title"] = "Detalhes da encomenda";
+    var stockPorProduto = ViewData["StockPorProduto"] as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
+    var funcionarioAceiteNome = ViewData["FuncionarioAceiteNome"] as string;
+    var funcionarioPreparouNome = ViewData["FuncionarioPreparouNome"] as string;
+    var badgeClass = Model.Estado switch
+    {
+        ConstantesEncomenda.PENDENTE => "bg-warning text-dark",
+        ConstantesEncomenda.ACEITE => "bg-info",
+        ConstantesEncomenda.REJEITADA => "bg-danger",
+        ConstantesEncomenda.EM_PREPARACAO => "bg-primary",
+        ConstantesEncomenda.CONCLUIDA => "bg-success",
+        _ => "bg-secondary"
+    };
+}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-1">Encomenda #@Model.Id</h1>
+        <p class="text-muted mb-0">
+            <span class="badge rounded-pill @badgeClass px-3 py-2">@Model.Estado</span>
+            <span class="ms-2">@Model.Cliente?.Nome</span>
+            <a asp-controller="Clientes" asp-action="Details" asp-route-id="@Model.ClienteId" class="btn btn-link btn-sm p-0 ms-1">Ver cliente</a>
+        </p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar à lista</a>
+</div>
+
+@if (TempData["MensagemSucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm">
+        @TempData["MensagemSucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+        @TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+@if (Model.Estado == ConstantesEncomenda.PENDENTE && User.IsInRole("Admin"))
+{
+    <div class="alert alert-info border-0 shadow-sm mb-4">
+        Consulte a coluna <strong>Em stock</strong> na tabela de itens antes de aceitar ou rejeitar a encomenda.
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold">Cliente e datas</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted small">Cliente</dt>
+                    <dd class="col-sm-8">@Model.Cliente?.Nome</dd>
+                    <dt class="col-sm-4 text-muted small">Estado</dt>
+                    <dd class="col-sm-8"><span class="badge rounded-pill @badgeClass">@Model.Estado</span></dd>
+                    <dt class="col-sm-4 text-muted small">Data de criação</dt>
+                    <dd class="col-sm-8">@Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</dd>
+                    @if (!string.IsNullOrEmpty(funcionarioAceiteNome))
+                    {
+                        <dt class="col-sm-4 text-muted small">Aceite por</dt>
+                        <dd class="col-sm-8">@funcionarioAceiteNome</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(funcionarioPreparouNome))
+                    {
+                        <dt class="col-sm-4 text-muted small">Preparado por</dt>
+                        <dd class="col-sm-8">@funcionarioPreparouNome</dd>
+                    }
+                    @if (Model.DataConclusao.HasValue)
+                    {
+                        <dt class="col-sm-4 text-muted small">Data de conclusão</dt>
+                        <dd class="col-sm-8">@Model.DataConclusao.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.MotivoRejeicao))
+                    {
+                        <dt class="col-sm-4 text-muted small">Motivo de rejeição</dt>
+                        <dd class="col-sm-8">@Model.MotivoRejeicao</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-semibold">Itens da encomenda</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Produto</th>
+                                <th class="text-end">Quantidade pedida</th>
+                                <th class="text-end pe-4">Em stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Itens)
+                            {
+                                var emStock = item.ProdutoId != 0 ? stockPorProduto.GetValueOrDefault(item.ProdutoId, 0) : 0m;
+                                var suficiente = emStock >= item.QuantidadePedida;
+                                <tr>
+                                    <td class="ps-4">@item.Produto?.Nome</td>
+                                    <td class="text-end">@item.QuantidadePedida.ToString("N2")</td>
+                                    <td class="text-end pe-4">
+                                        <span class="@(suficiente ? "text-success fw-medium" : "text-danger fw-medium")" title="@(suficiente ? "Stock suficiente" : "Stock insuficiente")">
+                                            @emStock.ToString("N2")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-body py-3">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            @if (User.IsInRole("Admin"))
+            {
+                @if (Model.Estado == ConstantesEncomenda.PENDENTE)
+                {
+                    <form asp-action="Aceitar" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success">Aceitar encomenda</button>
+                    </form>
+                    <a asp-action="Rejeitar" asp-route-id="@Model.Id" class="btn btn-outline-danger">Rejeitar</a>
+                }
+                @if (Model.Estado == ConstantesEncomenda.ACEITE)
+                {
+                    <a asp-action="Preparar" asp-route-id="@Model.Id" class="btn btn-primary">Iniciar preparação</a>
+                    <a asp-action="Rejeitar" asp-route-id="@Model.Id" class="btn btn-outline-danger">Rejeitar</a>
+                }
+                @if (Model.Estado == ConstantesEncomenda.EM_PREPARACAO)
+                {
+                    <form asp-action="Concluir" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success">Marcar como concluída</button>
+                    </form>
+                }
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary ms-auto">Voltar à lista</a>
+        </div>
+    </div>
+</div>

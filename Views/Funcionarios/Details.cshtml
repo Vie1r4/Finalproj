@@ -1,0 +1,96 @@
+@model Finalproj.Models.Funcionario
+@{
+    ViewData["Title"] = "Detalhes do funcionário";
+}
+
+<h1 class="mb-2">@Model.NomeCompleto</h1>
+<p class="text-muted mb-4">Ficha do funcionário</p>
+
+@if (TempData["FuncionarioCriado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Funcionário registado com sucesso.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["FuncionarioEditado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Alterações guardadas.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Identificação e contacto</h5>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Editar</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            </div>
+        }
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 col-md-2">Nome completo</dt>
+            <dd class="col-sm-9 col-md-10">@Model.NomeCompleto</dd>
+            <dt class="col-sm-3 col-md-2">NIF</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.NIF ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Data de nascimento</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.DataNascimento?.ToString("dd/MM/yyyy") ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Email</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Email ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Telefone</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Telefone ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Morada</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 col-md-2">Morada</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Morada ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Código-postal</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.CodigoPostal ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Localidade</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Localidade ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Dados profissionais</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 col-md-2">Cargo</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Cargo ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Data de admissão</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.DataAdmissao?.ToString("dd/MM/yyyy") ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Data de saída</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.DataSaida?.ToString("dd/MM/yyyy") ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">N.º Segurança Social</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.NumeroSegurancaSocial ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">IBAN</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.IBAN ?? "—")</dd>
+            @if (!string.IsNullOrWhiteSpace(Model.Notas))
+            {
+                <dt class="col-sm-3 col-md-2">Notas</dt>
+                <dd class="col-sm-9 col-md-10">@Model.Notas</dd>
+            }
+            <dt class="col-sm-3 col-md-2">Data de registo</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.DataRegisto?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar à lista</a>
+</div>

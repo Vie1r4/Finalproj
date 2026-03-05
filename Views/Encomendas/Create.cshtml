@@ -1,0 +1,33 @@
+@model Finalproj.Models.EncomendaCriarViewModel
+@using Finalproj.Models
+@{
+    ViewData["Title"] = "Nova encomenda";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-1">Nova encomenda</h1>
+        <p class="text-muted mb-0">Selecione o cliente. Em seguida escolha os produtos no catálogo.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar à lista</a>
+</div>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <label asp-for="ClienteId" class="form-label fw-semibold">Cliente que fez a encomenda</label>
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+                <div class="flex-grow-1" style="min-width: 260px;">
+                    <select asp-for="ClienteId" class="form-select form-select-lg" asp-items="@(ViewData["ClienteId"] as SelectList)">
+                        <option value="">— Escolher cliente —</option>
+                    </select>
+                    <span asp-validation-for="ClienteId" class="text-danger small"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">Continuar para catálogo</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

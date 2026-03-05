@@ -1,0 +1,143 @@
+@model Finalproj.Models.Cliente
+@using Finalproj.Models
+@{
+    ViewData["Title"] = "Detalhes do cliente";
+    var encomendasAtivas = ViewData["EncomendasAtivas"] as IList<Encomenda> ?? new List<Encomenda>();
+    var encomendasHistorico = ViewData["EncomendasHistorico"] as IList<Encomenda> ?? new List<Encomenda>();
+    var historicoPagina = (int)(ViewData["HistoricoPagina"] ?? 1);
+    var totalPaginasHistorico = (int)(ViewData["TotalPaginasHistorico"] ?? 1);
+    var totalHistorico = (int)(ViewData["TotalHistorico"] ?? 0);
+}
+
+<h1 class="mb-2">@Model.Nome</h1>
+<p class="text-muted mb-4">Ficha do cliente</p>
+
+@if (TempData["ClienteEditado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        Alterações guardadas.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Contacto</h5>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Editar</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 col-md-2">Nome</dt>
+            <dd class="col-sm-9 col-md-10">@Model.Nome</dd>
+            <dt class="col-sm-3 col-md-2">Email</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Email ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Telefone</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Telefone ?? "—")</dd>
+            @if (!string.IsNullOrWhiteSpace(Model.Notas))
+            {
+                <dt class="col-sm-3 col-md-2">Observações</dt>
+                <dd class="col-sm-9 col-md-10">@Model.Notas</dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-semibold text-dark">Encomendas ativas</h5>
+            @if (encomendasAtivas.Any())
+            {
+                <span class="badge rounded-pill bg-primary">@encomendasAtivas.Count</span>
+            }
+        </div>
+        <a asp-controller="Encomendas" asp-action="Create" asp-route-clienteId="@Model.Id" class="btn btn-sm btn-primary">Nova encomenda</a>
+    </div>
+    <div class="card-body p-0">
+        @if (encomendasAtivas.Any())
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var e in encomendasAtivas)
+                {
+                    var badgeClass = e.Estado == ConstantesEncomenda.PENDENTE ? "bg-warning text-dark" : e.Estado == ConstantesEncomenda.ACEITE ? "bg-info" : "bg-primary";
+                    <a asp-controller="Encomendas" asp-action="Details" asp-route-id="@e.Id" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 border-0 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="fw-semibold text-dark">Encomenda #@e.Id</span>
+                            <span class="badge rounded-pill @badgeClass px-2">@e.Estado</span>
+                            <span class="text-muted small">@e.DataCriacao.ToString("dd/MM/yyyy") · @e.DataCriacao.ToString("HH:mm")</span>
+                        </div>
+                        <span class="text-primary small fw-medium">Ver detalhes →</span>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 px-4">
+                <p class="text-muted mb-3">Este cliente ainda não tem encomendas ativas.</p>
+                <a asp-controller="Encomendas" asp-action="Create" asp-route-clienteId="@Model.Id" class="btn btn-outline-primary">Criar encomenda</a>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-white border-bottom py-3">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-semibold text-dark">Histórico de encomendas</h5>
+            @if (totalHistorico > 0)
+            {
+                <span class="badge rounded-pill bg-secondary">@totalHistorico</span>
+            }
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (encomendasHistorico.Any())
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var e in encomendasHistorico)
+                {
+                    var badgeClass = e.Estado == ConstantesEncomenda.CONCLUIDA ? "bg-success" : "bg-danger";
+                    var dataTexto = e.DataConclusao?.ToString("dd/MM/yyyy HH:mm") ?? e.DataCriacao.ToString("dd/MM/yyyy HH:mm");
+                    <a asp-controller="Encomendas" asp-action="Details" asp-route-id="@e.Id" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 border-0 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="fw-semibold text-dark">Encomenda #@e.Id</span>
+                            <span class="badge rounded-pill @badgeClass px-2">@e.Estado</span>
+                            <span class="text-muted small">@dataTexto</span>
+                        </div>
+                        <span class="text-primary small fw-medium">Ver detalhes →</span>
+                    </a>
+                }
+            </div>
+            @if (totalPaginasHistorico > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
+                    <span class="text-muted small">Página @historicoPagina de @totalPaginasHistorico · @totalHistorico encomenda(s) no total</span>
+                    <nav aria-label="Paginação do histórico">
+                        <ul class="pagination pagination-sm mb-0 gap-1">
+                            <li class="page-item @(historicoPagina <= 1 ? "disabled" : "")">
+                                <a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-historicoPagina="@(historicoPagina - 1)">Anterior</a>
+                            </li>
+                            <li class="page-item @(historicoPagina >= totalPaginasHistorico ? "disabled" : "")">
+                                <a class="page-link" asp-action="Details" asp-route-id="@Model.Id" asp-route-historicoPagina="@(historicoPagina + 1)">Seguinte</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5 px-4">
+                <p class="text-muted mb-0">Ainda não há encomendas concluídas ou rejeitadas.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar à lista</a>
+</div>

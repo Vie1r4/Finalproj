@@ -1,0 +1,41 @@
+@model Finalproj.Models.Encomenda
+@{
+    ViewData["Title"] = "Rejeitar encomenda";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="mb-1">Rejeitar encomenda #@Model.Id</h1>
+        <p class="text-muted mb-0">O stock reservado será libertado. Pode indicar um motivo para o cliente.</p>
+    </div>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+</div>
+
+<div class="alert alert-warning border-0 shadow-sm mb-4">
+    Ao rejeitar, o stock reservado será libertado e o cliente poderá ver o motivo (se indicado).
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 text-muted small">Cliente</dt>
+            <dd class="col-sm-9">@Model.Cliente?.Nome</dd>
+            <dt class="col-sm-3 text-muted small">Estado atual</dt>
+            <dd class="col-sm-9">@Model.Estado</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Rejeitar" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <label for="motivoRejeicao" class="form-label fw-semibold">Motivo de rejeição (opcional)</label>
+            <textarea name="motivoRejeicao" id="motivoRejeicao" class="form-control" rows="3" maxlength="500" placeholder="Ex.: Stock insuficiente após verificação"></textarea>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-danger">Confirmar rejeição</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>

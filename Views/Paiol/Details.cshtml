@@ -28,19 +28,27 @@
         <dd class="col-sm-10">@(ViewData["CargosAcesso"] is IList<string> cargos && cargos.Any() ? string.Join(", ", cargos) : "Nenhum cargo definido")</dd>
 
         <dt class="col-sm-2">NEM atual (kg)</dt>
-        <dd class="col-sm-10">@(ViewData["NEMAtual"] is decimal nem ? nem.ToString("N2") : "0,00") / @(Model?.LimiteMLE.ToString("N2")) (teto)</dd>
+        <dd class="col-sm-10">@(ViewData["NEMAtual"] is decimal nem ? nem.ToString("N2") : "0,00") / @(Model?.LimiteMLE.ToString("N2")) (capacidade máxima licenciada)</dd>
     </dl>
 </div>
 @if (ViewData["Carga"] is IEnumerable<Finalproj.Models.CargaPaiolItem> carga && carga.Any())
 {
-    <h5 class="mt-3">Carga no paiol (stock atual)</h5>
+    <h5 class="mt-3">Carga no paiol — Ocupação = soma da NEM de todos os produtos (legislação portuguesa)</h5>
     <table class="table table-sm">
-        <thead><tr><th>Produto</th><th>Quantidade</th><th>NEM (kg)</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Divisão de risco</th>
+                <th>Quantidade</th>
+                <th>NEM (kg)</th>
+            </tr>
+        </thead>
         <tbody>
             @foreach (var x in carga)
             {
                 <tr>
                     <td>@x.ProdutoNome</td>
+                    <td>@(string.IsNullOrEmpty(x.Divisao) ? "—" : x.Divisao)</td>
                     <td>@x.Quantidade.ToString("N2")</td>
                     <td>@x.NEMTotal.ToString("N2")</td>
                 </tr>

@@ -13,10 +13,16 @@ namespace Finalproj.Data
 
         public DbSet<Paiol> Paiol => Set<Paiol>();
         public DbSet<Perfil> Perfis => Set<Perfil>();
+        public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
+        public DbSet<Cliente> Clientes => Set<Cliente>();
         public DbSet<Produto> Produtos => Set<Produto>();
         public DbSet<EntradaPaiol> EntradasPaiol => Set<EntradaPaiol>();
         public DbSet<PaiolAcesso> PaiolAcessos => Set<PaiolAcesso>();
         public DbSet<SaidaPaiol> SaidasPaiol => Set<SaidaPaiol>();
+        public DbSet<Encomenda> Encomendas => Set<Encomenda>();
+        public DbSet<EncomendaItem> EncomendaItems => Set<EncomendaItem>();
+        public DbSet<Reserva> Reservas => Set<Reserva>();
+        public DbSet<LogSistema> LogSistema => Set<LogSistema>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,6 +72,54 @@ namespace Finalproj.Data
                 .HasOne(s => s.Produto)
                 .WithMany()
                 .HasForeignKey(s => s.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Encomenda>()
+                .HasOne(e => e.Cliente)
+                .WithMany()
+                .HasForeignKey(e => e.ClienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EncomendaItem>()
+                .HasOne(i => i.Encomenda)
+                .WithMany(e => e.Itens)
+                .HasForeignKey(i => i.EncomendaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EncomendaItem>()
+                .HasOne(i => i.Produto)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reserva>()
+                .HasOne(r => r.Encomenda)
+                .WithMany()
+                .HasForeignKey(r => r.EncomendaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Reserva>()
+                .HasOne(r => r.Produto)
+                .WithMany()
+                .HasForeignKey(r => r.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reserva>()
+                .HasIndex(r => new { r.EncomendaId, r.ProdutoId })
+                .IsUnique();
+
+            modelBuilder.Entity<EncomendaItem>()
+                .Property(i => i.QuantidadePedida)
+                .HasPrecision(18, 4);
+
+            modelBuilder.Entity<Reserva>()
+                .Property(r => r.Quantidade)
+                .HasPrecision(18, 4);
+
+            modelBuilder.Entity<SaidaPaiol>()
+                .HasOne(s => s.EntradaPaiol)
+                .WithMany()
+                .HasForeignKey(s => s.EntradaPaiolId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

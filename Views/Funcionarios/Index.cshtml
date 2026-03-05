@@ -1,5 +1,152 @@
+@model IEnumerable<Finalproj.Models.Funcionario>
+@using Finalproj.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Funcionários";
+    var pesquisa = ViewData["Pesquisa"] as string ?? "";
+    var ordenar = ViewData["Ordenar"] as string ?? "nome";
+    var cargo = ViewData["Cargo"] as string ?? "";
+    var cargos = ViewData["Cargos"] as IEnumerable<SelectListItem> ?? Array.Empty<SelectListItem>();
 }
+
 <h1 class="mb-4">Funcionários</h1>
-<p class="lead">Gestão de funcionários.</p>
+
+@if (TempData["FuncionarioCriado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Funcionário adicionado. Pode ver os detalhes abaixo.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["FuncionarioEditado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Alterações guardadas.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["FuncionarioEliminado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Funcionário eliminado.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" id="formFuncionarios" class="row g-3 align-items-end flex-wrap">
+            <div class="col-12 col-md-4 col-lg-3">
+                <label for="pesquisa" class="form-label small text-muted">Pesquisar</label>
+                <input type="text" id="pesquisa" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome, email, telefone ou NIF..." autocomplete="off" />
+            </div>
+            <div class="col-8 col-md-2 col-lg-2">
+                <label for="ordenarSelect" class="form-label small text-muted">Ordenar</label>
+                <select id="ordenarSelect" name="ordenar" class="form-select" aria-label="Ordenar funcionários">
+                    <option value="nome" selected="@(ordenar == "nome")">Por nome</option>
+                    <option value="email" selected="@(ordenar == "email")">Por email</option>
+                    <option value="recentes" selected="@(ordenar == "recentes")">Mais recentes</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2 col-lg-2">
+                <label for="cargo" class="form-label small text-muted">Cargo</label>
+                <select id="cargo" name="cargo" class="form-select" aria-label="Filtrar por cargo">
+                    <option value="">Todos</option>
+                    @foreach (var c in cargos)
+                    {
+                        <option value="@c.Value" selected="@(cargo == c.Value)">@c.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-4 col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0 small">@Model.Count() funcionário(s)</p>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Adicionar funcionário</a>
+    }
+</div>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Cargo</th>
+                    <th>Admissão</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.NomeCompleto</strong></td>
+                        <td>@(item.Email ?? "—")</td>
+                        <td>@(item.Telefone ?? "—")</td>
+                        <td>@(item.Cargo ?? "—")</td>
+                        <td>@(item.DataAdmissao?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Detalhes</a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Apagar</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="card border-0 bg-light">
+        <div class="card-body text-center py-5">
+            <p class="text-muted mb-4 fs-5">Ainda não há funcionários registados. @(User.IsInRole("Admin") ? "Adicione o primeiro." : "")</p>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Create" class="btn btn-primary">Adicionar funcionário</a>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        var form = document.getElementById('formFuncionarios');
+        var pesquisa = document.getElementById('pesquisa');
+        var ordenarSelect = document.getElementById('ordenarSelect');
+        var cargoSelect = document.getElementById('cargo');
+        var timeoutId;
+
+        function submitForm() {
+            form.submit();
+        }
+
+        if (pesquisa) {
+            pesquisa.addEventListener('input', function () {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(submitForm, 350);
+            });
+        }
+        if (ordenarSelect) {
+            ordenarSelect.addEventListener('change', submitForm);
+        }
+        if (cargoSelect) {
+            cargoSelect.addEventListener('change', submitForm);
+        }
+    })();
+</script>
+}

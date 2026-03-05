@@ -23,4 +23,16 @@ public class SaidaPaiol
 
     [Display(Name = "Data de saída")]
     public DateTime DataSaida { get; set; } = DateTime.UtcNow;
+
+    /// <summary> Utilizador (Identity) que efetuou a retirada. </summary>
+    [StringLength(450)]
+    [Display(Name = "Retirado por")]
+    public string? FuncionarioRetirouUserId { get; set; }
+
+    /// <summary> Encomenda à qual esta saída está associada (quando aplicável). </summary>
+    public int? EncomendaId { get; set; }
+
+    /// <summary> Lote (entrada) de origem para rastreabilidade e FIFO. </summary>
+    public int? EntradaPaiolId { get; set; }
+    public EntradaPaiol? EntradaPaiol { get; set; }
 }

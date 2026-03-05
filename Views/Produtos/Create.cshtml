@@ -39,6 +39,13 @@
                     <option value="">— Opcional —</option>
                 </select>
             </div>
+            <div class="mb-2">
+                <label asp-for="GrupoCompatibilidade" class="form-label"></label>
+                <select asp-for="GrupoCompatibilidade" class="form-select" asp-items="@ViewBag.GrupoCompatibilidade">
+                    <option value="">— Opcional (default G) —</option>
+                </select>
+                <small class="text-muted">Grupo ADR para co-armazenamento (G = maioria artigos de eventos).</small>
+            </div>
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary">Registar</button>
                 <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

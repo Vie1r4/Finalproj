@@ -1,5 +1,123 @@
+@model IEnumerable<Finalproj.Models.Cliente>
 @{
     ViewData["Title"] = "Clientes";
+    var pesquisa = ViewData["Pesquisa"] as string ?? "";
+    var ordenar = ViewData["Ordenar"] as string ?? "nome";
 }
+
 <h1 class="mb-4">Clientes</h1>
-<p class="lead">Gestão de clientes.</p>
+
+@if (TempData["ClienteCriado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Cliente adicionado. Já aparece na lista abaixo.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["ClienteEditado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Alterações guardadas.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+@if (TempData["ClienteEliminado"] as bool? == true)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Cliente eliminado.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" id="formClientes" class="row g-3 align-items-end flex-wrap">
+            <div class="col-12 col-md-4 col-lg-3">
+                <label for="pesquisa" class="form-label small text-muted">Pesquisar</label>
+                <input type="text" id="pesquisa" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome, email ou telefone..." autocomplete="off" />
+            </div>
+            <div class="col-8 col-md-3 col-lg-2">
+                <label for="ordenarSelect" class="form-label small text-muted">Ordenar</label>
+                <select id="ordenarSelect" name="ordenar" class="form-select" aria-label="Ordenar clientes">
+                    <option value="nome" selected="@(ordenar == "nome")">Por nome</option>
+                    <option value="email" selected="@(ordenar == "email")">Por email</option>
+                    <option value="recentes" selected="@(ordenar == "recentes")">Mais recentes</option>
+                </select>
+            </div>
+            <div class="col-4 col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Aplicar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0 small">@Model.Count() cliente(s)</p>
+    <a asp-action="Create" class="btn btn-primary">Adicionar Cliente</a>
+</div>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Observações</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.Nome</strong></td>
+                        <td>@(item.Email ?? "—")</td>
+                        <td>@(item.Telefone ?? "—")</td>
+                        <td class="text-muted small">@(string.IsNullOrWhiteSpace(item.Notas) ? "—" : (item.Notas.Length > 60 ? item.Notas.Substring(0, 60) + "…" : item.Notas))</td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Detalhes</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Apagar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="card border-0 bg-light">
+        <div class="card-body text-center py-5">
+            <p class="text-muted mb-4 fs-5">Ainda não tens clientes. Adiciona o teu primeiro cliente.</p>
+            <a asp-action="Create" class="btn btn-primary">Adicionar Cliente</a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        var form = document.getElementById('formClientes');
+        var pesquisa = document.getElementById('pesquisa');
+        var ordenarSelect = document.getElementById('ordenarSelect');
+        var timeoutId;
+
+        function submitForm() {
+            form.submit();
+        }
+
+        if (pesquisa) {
+            pesquisa.addEventListener('input', function () {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(submitForm, 350);
+            });
+        }
+        if (ordenarSelect) {
+            ordenarSelect.addEventListener('change', submitForm);
+        }
+    })();
+</script>
+}

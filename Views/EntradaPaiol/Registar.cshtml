@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Registar entrada no paiol";
     var classificacao = ViewData["Classificacao"] as string ?? "";
+    var grupoCompatibilidade = ViewData["GrupoCompatibilidade"] as string ?? "";
     var filtroTecnico = ViewData["FiltroTecnico"] as string ?? "";
     var calibre = ViewData["Calibre"] as string ?? "";
 }
@@ -25,7 +26,17 @@
                     }
                 </select>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
+                <label class="form-label small text-muted">Grupo ADR</label>
+                <select name="grupoCompatibilidade" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var g in ConstantesCatalogo.GruposCompatibilidade)
+                    {
+                        <option value="@g.Value" selected="@(grupoCompatibilidade == g.Value)">@g.Value</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
                 <label class="form-label small text-muted">Filtro técnico</label>
                 <select name="filtroTecnico" class="form-select form-select-sm">
                     <option value="">— Todos —</option>
@@ -35,7 +46,7 @@
                     }
                 </select>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label small text-muted">Calibre</label>
                 <select name="calibre" class="form-select form-select-sm">
                     <option value="">— Todos —</option>
@@ -73,6 +84,20 @@
                 <input asp-for="Quantidade" class="form-control" step="0.0001" />
                 <span asp-validation-for="Quantidade" class="text-danger"></span>
                 <small class="text-muted">Ex.: 10 caixas → o sistema calcula o NEM total (quantidade × NEM por unidade do produto).</small>
+            </div>
+            <div class="mb-3">
+                <label asp-for="NumeroLote" class="form-label"></label>
+                <input asp-for="NumeroLote" class="form-control" placeholder="Opcional" />
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DataFabrico" class="form-label"></label>
+                    <input asp-for="DataFabrico" class="form-control" type="date" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DataValidade" class="form-label"></label>
+                    <input asp-for="DataValidade" class="form-control" type="date" />
+                </div>
             </div>
             <div>
                 <button type="submit" class="btn btn-primary">Registar entrada</button>

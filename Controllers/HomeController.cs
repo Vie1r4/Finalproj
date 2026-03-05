@@ -78,7 +78,14 @@ namespace Finalproj.Controllers
             foreach (var role in _roleManager.Roles.ToList())
                 await _roleManager.DeleteAsync(role);
 
+            // Apagar primeiro as tabelas que referenciam Paiol e Produto (respeitar FK)
+            await _context.EntradasPaiol.ExecuteDeleteAsync();
+            await _context.SaidasPaiol.ExecuteDeleteAsync();
+            await _context.PaiolAcessos.ExecuteDeleteAsync();
             await _context.Paiol.ExecuteDeleteAsync();
+            await _context.Produtos.ExecuteDeleteAsync();
+            await _context.Funcionarios.ExecuteDeleteAsync();
+            await _context.Clientes.ExecuteDeleteAsync();
             await _context.Perfis.ExecuteDeleteAsync();
             await _context.SaveChangesAsync();
 

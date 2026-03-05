@@ -1,0 +1,20 @@
+@model Finalproj.Models.Cliente
+@{
+    ViewData["Title"] = "Eliminar cliente";
+}
+<h1 class="mb-3">Eliminar cliente</h1>
+<div class="alert alert-warning" role="alert">
+    Tem a certeza que deseja eliminar este cliente? Esta ação não pode ser revertida.
+</div>
+<dl class="row border rounded p-3 bg-light">
+    <dt class="col-sm-3">Nome / Designação</dt>
+    <dd class="col-sm-9">@Model.Nome</dd>
+    <dt class="col-sm-3">Tipo</dt>
+    <dd class="col-sm-9">@Model.TipoCliente</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "—")</dd>
+</dl>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    <button type="submit" class="btn btn-danger">Sim, eliminar</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+</form>

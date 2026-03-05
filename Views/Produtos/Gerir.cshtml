@@ -4,6 +4,7 @@
     ViewData["Title"] = "Gerir produtos";
     var pesquisa = ViewData["Pesquisa"] as string ?? "";
     var classificacao = ViewData["Classificacao"] as string ?? "";
+    var grupoCompatibilidade = ViewData["GrupoCompatibilidade"] as string ?? "";
     var filtroTecnico = ViewData["FiltroTecnico"] as string ?? "";
     var calibre = ViewData["Calibre"] as string ?? "";
 }
@@ -14,7 +15,7 @@
     <div class="card-body">
         <h6 class="card-title">Subdivisão dos produtos</h6>
         <form method="get" asp-action="Gerir" class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <label class="form-label small text-muted">Pesquisar por nome</label>
                 <input type="text" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome do produto..." />
             </div>
@@ -25,6 +26,16 @@
                     @foreach (var c in ConstantesCatalogo.ClassificacoesRisco)
                     {
                         <option value="@c" selected="@(classificacao == c)">@ConstantesCatalogo.TextoClassificacao(c)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted">Grupo ADR</label>
+                <select name="grupoCompatibilidade" class="form-select">
+                    <option value="">— Todos —</option>
+                    @foreach (var g in ConstantesCatalogo.GruposCompatibilidade)
+                    {
+                        <option value="@g.Value" selected="@(grupoCompatibilidade == g.Value)">@g.Value</option>
                     }
                 </select>
             </div>
@@ -48,7 +59,7 @@
                     }
                 </select>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md-1">
                 <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
             </div>
         </form>
@@ -69,6 +80,7 @@
             <th>@Html.DisplayNameFor(m => m.Nome)</th>
             <th>NEM/unidade (kg)</th>
             <th>Classificação de Risco</th>
+            <th>Grupo</th>
             <th>Filtro técnico</th>
             <th>Calibre</th>
             <th>Unidade</th>
@@ -82,6 +94,7 @@
                 <td>@item.Nome</td>
                 <td>@item.NEMPorUnidade.ToString("N2")</td>
                 <td>@ConstantesCatalogo.TextoClassificacao(item.FamiliaRisco)</td>
+                <td>@(item.GrupoCompatibilidade ?? "—")</td>
                 <td>@ConstantesCatalogo.TextoFiltroTecnico(item.FiltroTecnico)</td>
                 <td>@ConstantesCatalogo.TextoCalibre(item.Calibre)</td>
                 <td>@(item.Unidade ?? "—")</td>

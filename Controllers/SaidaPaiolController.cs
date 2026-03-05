@@ -95,7 +95,8 @@ namespace Finalproj.Controllers
                 PaiolId = model.PaiolId,
                 ProdutoId = model.ProdutoId,
                 Quantidade = model.Quantidade,
-                DataSaida = DateTime.UtcNow
+                DataSaida = DateTime.UtcNow,
+                FuncionarioRetirouUserId = _userManager.GetUserId(User)
             });
             await _context.SaveChangesAsync();
 
