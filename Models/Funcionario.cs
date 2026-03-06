@@ -5,8 +5,9 @@ namespace Finalproj.Models;
 /// <summary>
 /// Ficha de funcionário. Campos alinhados a gestão de pessoal e RGPD.
 /// Pode estar associado a um utilizador (UserId) quando tem acesso ao sistema.
+/// Documentos: cartão de cidadão e ADDR (se aplicável) guardados em ficheiro.
 /// </summary>
-public class Funcionario : IValidatableObject
+public class Funcionario
 {
     public int Id { get; set; }
 
@@ -19,10 +20,6 @@ public class Funcionario : IValidatableObject
     [Display(Name = "NIF")]
     [RegularExpression(@"^\d{9}$", ErrorMessage = "NIF inválido (apenas 9 dígitos).")]
     public string? NIF { get; set; }
-
-    [Display(Name = "Data de nascimento")]
-    [DataType(DataType.Date)]
-    public DateTime? DataNascimento { get; set; }
 
     [EmailAddress(ErrorMessage = "Email inválido.")]
     [StringLength(256)]
@@ -38,26 +35,6 @@ public class Funcionario : IValidatableObject
     [Display(Name = "Morada")]
     public string? Morada { get; set; }
 
-    [StringLength(10)]
-    [Display(Name = "Código-postal")]
-    public string? CodigoPostal { get; set; }
-
-    [StringLength(100)]
-    [Display(Name = "Localidade")]
-    public string? Localidade { get; set; }
-
-    [StringLength(50)]
-    [Display(Name = "Cargo")]
-    public string? Cargo { get; set; }
-
-    [Display(Name = "Data de admissão")]
-    [DataType(DataType.Date)]
-    public DateTime? DataAdmissao { get; set; }
-
-    [Display(Name = "Data de saída")]
-    [DataType(DataType.Date)]
-    public DateTime? DataSaida { get; set; }
-
     [StringLength(12)]
     [Display(Name = "N.º Segurança Social")]
     public string? NumeroSegurancaSocial { get; set; }
@@ -66,10 +43,15 @@ public class Funcionario : IValidatableObject
     [Display(Name = "IBAN")]
     public string? IBAN { get; set; }
 
+    [StringLength(50)]
+    [Display(Name = "Cargo")]
+    public string? Cargo { get; set; }
+
     [StringLength(500)]
     [Display(Name = "Notas")]
     public string? Notas { get; set; }
 
+    /// <summary> Associado a um utilizador do sistema (tem conta de acesso). </summary>
     [StringLength(450)]
     public string? UserId { get; set; }
 
@@ -77,9 +59,24 @@ public class Funcionario : IValidatableObject
     [DataType(DataType.DateTime)]
     public DateTime? DataRegisto { get; set; }
 
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (DataAdmissao.HasValue && DataSaida.HasValue && DataSaida.Value < DataAdmissao.Value)
-            yield return new ValidationResult("A data de saída não pode ser anterior à data de admissão.", new[] { nameof(DataSaida) });
-    }
+    // --- Documentos: Cartão de Cidadão, ADR, Licença de Operador ---
+
+    [StringLength(500)]
+    [Display(Name = "Cartão de cidadão")]
+    public string? CartaoCidadaoCaminho { get; set; }
+
+    [StringLength(500)]
+    [Display(Name = "ADR")]
+    public string? DocumentoADDRCaminho { get; set; }
+
+    [StringLength(500)]
+    [Display(Name = "Licença de Operador")]
+    public string? LicencaOperadorCaminho { get; set; }
+
+    [StringLength(500)]
+    [Display(Name = "Outros")]
+    public string? OutrosCaminho { get; set; }
+
+    /// <summary> Documentos adicionais com nome personalizado (substitui o uso de um único "Outros"). </summary>
+    public ICollection<FuncionarioDocumentoExtra> DocumentosExtras { get; set; } = new List<FuncionarioDocumentoExtra>();
 }

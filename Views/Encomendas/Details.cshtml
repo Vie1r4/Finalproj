@@ -63,6 +63,11 @@
                     <dd class="col-sm-8"><span class="badge rounded-pill @badgeClass">@Model.Estado</span></dd>
                     <dt class="col-sm-4 text-muted small">Data de criação</dt>
                     <dd class="col-sm-8">@Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</dd>
+                    @if (Model.DataEntrega.HasValue)
+                    {
+                        <dt class="col-sm-4 text-muted small">Data de entrega</dt>
+                        <dd class="col-sm-8">@Model.DataEntrega.Value.ToString("dd/MM/yyyy")</dd>
+                    }
                     @if (!string.IsNullOrEmpty(funcionarioAceiteNome))
                     {
                         <dt class="col-sm-4 text-muted small">Aceite por</dt>
@@ -77,6 +82,11 @@
                     {
                         <dt class="col-sm-4 text-muted small">Data de conclusão</dt>
                         <dd class="col-sm-8">@Model.DataConclusao.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Observacoes))
+                    {
+                        <dt class="col-sm-4 text-muted small">Observações</dt>
+                        <dd class="col-sm-8">@Model.Observacoes</dd>
                     }
                     @if (!string.IsNullOrEmpty(Model.MotivoRejeicao))
                     {

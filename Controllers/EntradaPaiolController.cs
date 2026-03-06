@@ -121,6 +121,7 @@ namespace Finalproj.Controllers
                 ProdutoId = produto.Id,
                 Quantidade = model.Quantidade,
                 DataEntrada = DateTime.UtcNow,
+                FuncionarioRegistouUserId = _userManager.GetUserId(User),
                 NumeroLote = string.IsNullOrWhiteSpace(model.NumeroLote) ? null : model.NumeroLote.Trim(),
                 DataFabrico = model.DataFabrico,
                 DataValidade = model.DataValidade

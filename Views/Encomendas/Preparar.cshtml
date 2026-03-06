@@ -3,12 +3,15 @@
 @{
     ViewData["Title"] = "Preparar encomenda";
     var stockPorProduto = ViewData["StockPorProduto"] as Dictionary<int, decimal> ?? new Dictionary<int, decimal>();
+    var paiols = ViewData["Paiols"] as List<Paiol> ?? new List<Paiol>();
+    var stockPaiolProduto = ViewData["StockPaiolProduto"] as Dictionary<string, decimal> ?? new Dictionary<string, decimal>();
     var algumInsuficiente = Model.Itens?.Any(i => stockPorProduto.GetValueOrDefault(i.ProdutoId, 0) < i.QuantidadePedida) ?? false;
+    var indiceRetirada = 0;
 }
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <h1 class="mb-1">Preparar encomenda #@Model.Id</h1>
-        <p class="text-muted mb-0">Cliente: @Model.Cliente?.Nome. O sistema aloca saídas por FIFO (lotes mais antigos primeiro) nos paióis a que tem acesso.</p>
+        <p class="text-muted mb-0">Cliente: @Model.Cliente?.Nome. Escolha de que paiol retirar cada quantidade por artigo.</p>
     </div>
     <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Voltar</a>
 </div>
@@ -16,7 +19,7 @@
 @if (algumInsuficiente)
 {
     <div class="alert alert-warning border-0 shadow-sm mb-4">
-        <strong>Stock insuficiente</strong> em pelo menos um artigo. A preparação só avança quando houver stock para todos os itens.
+        <strong>Stock insuficiente</strong> em pelo menos um artigo. A preparação só avança quando a soma das quantidades que indicar por artigo for igual à quantidade pedida e não exceder o stock em cada paiol.
         Se não for possível satisfazer a encomenda, pode <a asp-action="Rejeitar" asp-route-id="@Model.Id" class="alert-link">rejeitar a encomenda</a> para libertar a reserva.
     </div>
 }
@@ -30,52 +33,74 @@
     </div>
 }
 
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white border-bottom py-3">
-        <h5 class="mb-0 fw-semibold">Itens a preparar</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">Produto</th>
-                        <th class="text-end">Quantidade pedida</th>
-                        <th class="text-end pe-4">Em stock</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Itens ?? Enumerable.Empty<EncomendaItem>())
-                    {
-                        var emStock = stockPorProduto.GetValueOrDefault(item.ProdutoId, 0);
-                        var suficiente = emStock >= item.QuantidadePedida;
+<form asp-action="RegistarPreparacao" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-semibold">Itens a preparar – escolha o paiol de origem</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <td class="ps-4">@item.Produto?.Nome</td>
-                            <td class="text-end">@item.QuantidadePedida.ToString("N2")</td>
-                            <td class="text-end pe-4">
-                                <span class="@(suficiente ? "text-success fw-medium" : "text-danger fw-medium")">@emStock.ToString("N2")</span>
-                            </td>
+                            <th class="ps-4">Produto</th>
+                            <th class="text-end">Quantidade pedida</th>
+                            <th class="text-end">Em stock (total)</th>
+                            <th class="pe-4">De onde retirar (paiol e quantidade)</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Itens ?? Enumerable.Empty<EncomendaItem>())
+                        {
+                            var emStockTotal = stockPorProduto.GetValueOrDefault(item.ProdutoId, 0);
+                            var suficiente = emStockTotal >= item.QuantidadePedida;
+                            var paiolsComStock = paiols.Where(p => stockPaiolProduto.GetValueOrDefault($"{p.Id}_{item.ProdutoId}", 0) > 0).ToList();
+                            <tr>
+                                <td class="ps-4">@item.Produto?.Nome</td>
+                                <td class="text-end">@item.QuantidadePedida.ToString("N2")</td>
+                                <td class="text-end">
+                                    <span class="@(suficiente ? "text-success fw-medium" : "text-danger fw-medium")">@emStockTotal.ToString("N2")</span>
+                                </td>
+                                <td class="pe-4">
+                                    @if (paiolsComStock.Any())
+                                    {
+                                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                                            @foreach (var paiol in paiolsComStock)
+                                            {
+                                                var stockNestePaiol = stockPaiolProduto.GetValueOrDefault($"{paiol.Id}_{item.ProdutoId}", 0);
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <label class="small mb-0 text-muted">@paiol.Nome <span class="badge bg-secondary">@stockNestePaiol.ToString("N2")</span></label>
+                                                    <input type="hidden" name="retiradas[@indiceRetirada].EncomendaItemId" value="@item.Id" />
+                                                    <input type="hidden" name="retiradas[@indiceRetirada].PaiolId" value="@paiol.Id" />
+                                                    <input type="number" name="retiradas[@indiceRetirada].Quantidade" class="form-control form-control-sm" style="width: 90px;" step="0.0001" min="0" max="@stockNestePaiol" value="0" placeholder="0" />
+                                                    @{ indiceRetirada++; }
+                                                </div>
+                                            }
+                                        </div>
+                                        <small class="text-muted">Soma das quantidades deve ser <strong>@item.QuantidadePedida.ToString("N2")</strong></small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Nenhum paiol com stock</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body py-3">
-        <form asp-action="RegistarPreparacao" asp-route-id="@Model.Id" method="post">
-            @Html.AntiForgeryToken()
+    <div class="card shadow-sm border-0">
+        <div class="card-body py-3">
             <div class="d-flex gap-2 flex-wrap align-items-center">
-                <button type="submit" class="btn btn-primary">Registar preparação (alocar saídas FIFO)</button>
+                <button type="submit" class="btn btn-primary">Registar preparação</button>
                 <a asp-action="Rejeitar" asp-route-id="@Model.Id" class="btn btn-outline-danger">Rejeitar encomenda</a>
                 <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
             </div>
-            @if (algumInsuficiente)
-            {
-                <p class="small text-muted mt-2 mb-0">Há itens com stock insuficiente. A preparação só avança se houver stock nos paióis a que tem acesso; caso contrário, rejeite a encomenda.</p>
-            }
-        </form>
+            <p class="small text-muted mt-2 mb-0">Indique em cada linha a quantidade a retirar de cada paiol. A soma por produto deve ser igual à quantidade pedida. Dentro de cada paiol o sistema usa FIFO (lotes mais antigos primeiro).</p>
+        </div>
     </div>
-</div>
+</form>

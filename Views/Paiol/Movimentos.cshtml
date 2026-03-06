@@ -4,6 +4,7 @@
     var tipo = ViewData["Tipo"] as string ?? "";
     var entradas = ViewData["Entradas"] as List<EntradaPaiol> ?? new List<EntradaPaiol>();
     var saidas = ViewData["Saidas"] as List<SaidaPaiol> ?? new List<SaidaPaiol>();
+    var nomesEntradas = ViewData["NomesUtilizadoresEntradas"] as Dictionary<string, string> ?? new Dictionary<string, string>();
     var nomesSaidas = ViewData["NomesUtilizadoresSaidas"] as Dictionary<string, string> ?? new Dictionary<string, string>();
 }
 <h1>Movimentos</h1>
@@ -44,6 +45,7 @@
                 <th>Produto</th>
                 <th>Quantidade</th>
                 <th>NEM (kg)</th>
+                <th>Registado por</th>
             </tr>
         </thead>
         <tbody>
@@ -55,6 +57,7 @@
                     <td>@e.Produto?.Nome</td>
                     <td>@e.Quantidade.ToString("N2")</td>
                     <td>@((e.Quantidade * (e.Produto?.NEMPorUnidade ?? 0)).ToString("N2"))</td>
+                    <td>@(string.IsNullOrEmpty(e.FuncionarioRegistouUserId) ? "—" : (nomesEntradas.GetValueOrDefault(e.FuncionarioRegistouUserId!) ?? "—"))</td>
                 </tr>
             }
         </tbody>
@@ -76,6 +79,7 @@ else if (tipo == "Entradas")
                 <th>Produto</th>
                 <th>Quantidade</th>
                 <th>Retirado por</th>
+                <th>Encomenda</th>
             </tr>
         </thead>
         <tbody>
@@ -87,6 +91,16 @@ else if (tipo == "Entradas")
                     <td>@s.Produto?.Nome</td>
                     <td>@s.Quantidade.ToString("N2")</td>
                     <td>@(string.IsNullOrEmpty(s.FuncionarioRetirouUserId) ? "—" : (nomesSaidas.GetValueOrDefault(s.FuncionarioRetirouUserId!) ?? "—"))</td>
+                    <td>
+                        @if (s.EncomendaId.HasValue)
+                        {
+                            <a asp-controller="Encomendas" asp-action="Details" asp-route-id="@s.EncomendaId.Value" class="text-decoration-none">#@s.EncomendaId.Value</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>

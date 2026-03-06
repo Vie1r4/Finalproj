@@ -1,11 +1,16 @@
 @model IEnumerable<Finalproj.Models.Cliente>
+@using Finalproj.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Clientes";
     var pesquisa = ViewData["Pesquisa"] as string ?? "";
     var ordenar = ViewData["Ordenar"] as string ?? "nome";
 }
 
-<h1 class="mb-4">Clientes</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h1 class="mb-0">Clientes</h1>
+    <a asp-action="Create" class="btn btn-primary">Adicionar cliente</a>
+</div>
 
 @if (TempData["ClienteCriado"] as bool? == true)
 {
@@ -29,43 +34,42 @@
     </div>
 }
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" asp-action="Index" id="formClientes" class="row g-3 align-items-end flex-wrap">
-            <div class="col-12 col-md-4 col-lg-3">
-                <label for="pesquisa" class="form-label small text-muted">Pesquisar</label>
-                <input type="text" id="pesquisa" name="pesquisa" value="@pesquisa" class="form-control" placeholder="Nome, email ou telefone..." autocomplete="off" />
-            </div>
-            <div class="col-8 col-md-3 col-lg-2">
-                <label for="ordenarSelect" class="form-label small text-muted">Ordenar</label>
-                <select id="ordenarSelect" name="ordenar" class="form-select" aria-label="Ordenar clientes">
-                    <option value="nome" selected="@(ordenar == "nome")">Por nome</option>
-                    <option value="email" selected="@(ordenar == "email")">Por email</option>
-                    <option value="recentes" selected="@(ordenar == "recentes")">Mais recentes</option>
-                </select>
-            </div>
-            <div class="col-4 col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100">Aplicar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="text-muted mb-0 small">@Model.Count() cliente(s)</p>
-    <a asp-action="Create" class="btn btn-primary">Adicionar Cliente</a>
+<div class="bg-light rounded-3 p-3 p-md-4 mb-4">
+    <form method="get" asp-action="Index" id="formClientes" class="row g-2 g-md-3 align-items-end">
+        <div class="col-12 col-md-5 col-lg-4">
+            <label for="pesquisa" class="form-label small fw-medium text-secondary mb-1">Pesquisar</label>
+            <input type="text" id="pesquisa" name="pesquisa" value="@pesquisa" class="form-control form-control-sm" placeholder="Nome, email, telefone ou NIF..." autocomplete="off" />
+        </div>
+        <div class="col-12 col-md-3 col-lg-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100">Aplicar</button>
+        </div>
+    </form>
 </div>
 
 @if (Model.Any())
 {
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <p class="text-muted mb-0 small">@Model.Count() cliente(s)</p>
+        <form method="get" asp-action="Index" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="pesquisa" value="@pesquisa" />
+            <label for="ordenarSelect" class="form-label small mb-0 text-nowrap">Ordenar:</label>
+            <select id="ordenarSelect" name="ordenar" class="form-select form-select-sm" style="width:auto;" aria-label="Ordenar lista">
+                <option value="nome" selected="@(ordenar == "nome")">Por nome</option>
+                <option value="email" selected="@(ordenar == "email")">Por email</option>
+                <option value="recentes" selected="@(ordenar == "recentes")">Mais recentes</option>
+            </select>
+        </form>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
                     <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>NIF</th>
                     <th>Email</th>
                     <th>Telefone</th>
-                    <th>Observações</th>
                     <th class="text-end">Ações</th>
                 </tr>
             </thead>
@@ -74,9 +78,10 @@
                 {
                     <tr>
                         <td><strong>@item.Nome</strong></td>
-                        <td>@(item.Email ?? "—")</td>
+                        <td>@(item.TipoCliente ?? "—")</td>
+                        <td>@(item.NIF ?? "—")</td>
+                        <td class="text-break">@(item.Email ?? "—")</td>
                         <td>@(item.Telefone ?? "—")</td>
-                        <td class="text-muted small">@(string.IsNullOrWhiteSpace(item.Notas) ? "—" : (item.Notas.Length > 60 ? item.Notas.Substring(0, 60) + "…" : item.Notas))</td>
                         <td class="text-end">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Detalhes</a>
                             <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Apagar</a>
@@ -91,8 +96,8 @@ else
 {
     <div class="card border-0 bg-light">
         <div class="card-body text-center py-5">
-            <p class="text-muted mb-4 fs-5">Ainda não tens clientes. Adiciona o teu primeiro cliente.</p>
-            <a asp-action="Create" class="btn btn-primary">Adicionar Cliente</a>
+            <p class="text-muted mb-4 fs-5">Ainda não há clientes. Adicione o primeiro.</p>
+            <a asp-action="Create" class="btn btn-primary">Adicionar cliente</a>
         </div>
     </div>
 }
@@ -103,21 +108,17 @@ else
         var form = document.getElementById('formClientes');
         var pesquisa = document.getElementById('pesquisa');
         var ordenarSelect = document.getElementById('ordenarSelect');
+        var sortForm = ordenarSelect && ordenarSelect.closest('form');
         var timeoutId;
-
-        function submitForm() {
-            form.submit();
-        }
-
+        function submitForm() { if (form) form.submit(); }
+        function submitSort() { if (sortForm) sortForm.submit(); }
         if (pesquisa) {
             pesquisa.addEventListener('input', function () {
                 clearTimeout(timeoutId);
                 timeoutId = setTimeout(submitForm, 350);
             });
         }
-        if (ordenarSelect) {
-            ordenarSelect.addEventListener('change', submitForm);
-        }
+        if (ordenarSelect && sortForm) ordenarSelect.addEventListener('change', submitSort);
     })();
 </script>
 }

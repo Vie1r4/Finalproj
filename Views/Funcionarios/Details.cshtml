@@ -38,55 +38,100 @@
             <dd class="col-sm-9 col-md-10">@Model.NomeCompleto</dd>
             <dt class="col-sm-3 col-md-2">NIF</dt>
             <dd class="col-sm-9 col-md-10">@(Model.NIF ?? "—")</dd>
-            <dt class="col-sm-3 col-md-2">Data de nascimento</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.DataNascimento?.ToString("dd/MM/yyyy") ?? "—")</dd>
             <dt class="col-sm-3 col-md-2">Email</dt>
             <dd class="col-sm-9 col-md-10">@(Model.Email ?? "—")</dd>
             <dt class="col-sm-3 col-md-2">Telefone</dt>
             <dd class="col-sm-9 col-md-10">@(Model.Telefone ?? "—")</dd>
-        </dl>
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header bg-light">
-        <h5 class="mb-0">Morada</h5>
-    </div>
-    <div class="card-body">
-        <dl class="row mb-0">
             <dt class="col-sm-3 col-md-2">Morada</dt>
             <dd class="col-sm-9 col-md-10">@(Model.Morada ?? "—")</dd>
-            <dt class="col-sm-3 col-md-2">Código-postal</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.CodigoPostal ?? "—")</dd>
-            <dt class="col-sm-3 col-md-2">Localidade</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.Localidade ?? "—")</dd>
-        </dl>
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header bg-light">
-        <h5 class="mb-0">Dados profissionais</h5>
-    </div>
-    <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3 col-md-2">Cargo</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.Cargo ?? "—")</dd>
-            <dt class="col-sm-3 col-md-2">Data de admissão</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.DataAdmissao?.ToString("dd/MM/yyyy") ?? "—")</dd>
-            <dt class="col-sm-3 col-md-2">Data de saída</dt>
-            <dd class="col-sm-9 col-md-10">@(Model.DataSaida?.ToString("dd/MM/yyyy") ?? "—")</dd>
             <dt class="col-sm-3 col-md-2">N.º Segurança Social</dt>
             <dd class="col-sm-9 col-md-10">@(Model.NumeroSegurancaSocial ?? "—")</dd>
             <dt class="col-sm-3 col-md-2">IBAN</dt>
             <dd class="col-sm-9 col-md-10">@(Model.IBAN ?? "—")</dd>
+            <dt class="col-sm-3 col-md-2">Cargo</dt>
+            <dd class="col-sm-9 col-md-10">@(Model.Cargo ?? "—")</dd>
             @if (!string.IsNullOrWhiteSpace(Model.Notas))
             {
                 <dt class="col-sm-3 col-md-2">Notas</dt>
                 <dd class="col-sm-9 col-md-10">@Model.Notas</dd>
             }
+            <dt class="col-sm-3 col-md-2">Associado a funcionários</dt>
+            <dd class="col-sm-9 col-md-10">
+                @if (!string.IsNullOrEmpty(Model.UserId))
+                {
+                    <span class="badge bg-success">Sim</span> <span class="small text-muted">(tem conta de utilizador no sistema)</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Não</span>
+                }
+            </dd>
             <dt class="col-sm-3 col-md-2">Data de registo</dt>
             <dd class="col-sm-9 col-md-10">@(Model.DataRegisto?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Documentos</h5>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 col-md-2">Cartão de Cidadão</dt>
+            <dd class="col-sm-9 col-md-10">
+                @if (!string.IsNullOrEmpty(Model.CartaoCidadaoCaminho))
+                {
+                    <a asp-action="Download" asp-route-id="@Model.Id" asp-route-tipo="cc" target="_blank" class="btn btn-sm btn-outline-success">Ver documento</a>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </dd>
+            <dt class="col-sm-3 col-md-2">ADR</dt>
+            <dd class="col-sm-9 col-md-10">
+                @if (!string.IsNullOrEmpty(Model.DocumentoADDRCaminho))
+                {
+                    <a asp-action="Download" asp-route-id="@Model.Id" asp-route-tipo="addr" target="_blank" class="btn btn-sm btn-outline-success">Ver documento</a>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </dd>
+            <dt class="col-sm-3 col-md-2">Licença de Operador</dt>
+            <dd class="col-sm-9 col-md-10">
+                @if (!string.IsNullOrEmpty(Model.LicencaOperadorCaminho))
+                {
+                    <a asp-action="Download" asp-route-id="@Model.Id" asp-route-tipo="licenca" target="_blank" class="btn btn-sm btn-outline-success">Ver documento</a>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </dd>
+            @if (Model.DocumentosExtras?.Any() == true || !string.IsNullOrEmpty(Model.OutrosCaminho))
+            {
+                <dt class="col-sm-3 col-md-2">Documentos adicionais</dt>
+                <dd class="col-sm-9 col-md-10">
+                    @if (Model.DocumentosExtras?.Any() == true)
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var ext in Model.DocumentosExtras)
+                            {
+                                <li class="mb-1">
+                                    <a asp-action="Download" asp-route-id="@Model.Id" asp-route-tipo="extra" asp-route-extraId="@ext.Id" target="_blank" class="btn btn-sm btn-outline-success">@(string.IsNullOrWhiteSpace(ext.Nome) ? "Ver documento" : ext.Nome)</a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.OutrosCaminho))
+                    {
+                        <p class="mb-0 mt-1"><a asp-action="Download" asp-route-id="@Model.Id" asp-route-tipo="outros" target="_blank" class="btn btn-sm btn-outline-secondary">Outros (antigo)</a></p>
+                    }
+                </dd>
+            }
         </dl>
     </div>
 </div>

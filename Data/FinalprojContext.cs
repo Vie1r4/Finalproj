@@ -12,9 +12,12 @@ namespace Finalproj.Data
         }
 
         public DbSet<Paiol> Paiol => Set<Paiol>();
+        public DbSet<PaiolDocumentoExtra> PaiolDocumentoExtras => Set<PaiolDocumentoExtra>();
         public DbSet<Perfil> Perfis => Set<Perfil>();
         public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
+        public DbSet<FuncionarioDocumentoExtra> FuncionarioDocumentoExtras => Set<FuncionarioDocumentoExtra>();
         public DbSet<Cliente> Clientes => Set<Cliente>();
+        public DbSet<ClienteDocumentoExtra> ClienteDocumentoExtras => Set<ClienteDocumentoExtra>();
         public DbSet<Produto> Produtos => Set<Produto>();
         public DbSet<EntradaPaiol> EntradasPaiol => Set<EntradaPaiol>();
         public DbSet<PaiolAcesso> PaiolAcessos => Set<PaiolAcesso>();
@@ -31,6 +34,12 @@ namespace Finalproj.Data
             modelBuilder.Entity<Paiol>()
                 .Property(p => p.LimiteMLE)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<PaiolDocumentoExtra>()
+                .HasOne(d => d.Paiol)
+                .WithMany(p => p.DocumentosExtras)
+                .HasForeignKey(d => d.PaiolId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Produto>()
                 .Property(p => p.NEMPorUnidade)
@@ -121,6 +130,18 @@ namespace Finalproj.Data
                 .WithMany()
                 .HasForeignKey(s => s.EntradaPaiolId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FuncionarioDocumentoExtra>()
+                .HasOne(d => d.Funcionario)
+                .WithMany(f => f.DocumentosExtras)
+                .HasForeignKey(d => d.FuncionarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ClienteDocumentoExtra>()
+                .HasOne(d => d.Cliente)
+                .WithMany(c => c.DocumentosExtras)
+                .HasForeignKey(d => d.ClienteId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

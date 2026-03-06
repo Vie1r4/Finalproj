@@ -119,7 +119,8 @@ namespace Finalproj.Controllers
 
         /// <summary>
         /// Página de perfil do utilizador autenticado (Tutorial Class 8: dados adicionais em Perfil, Roles).
-        /// Email e nome de utilizador são só leitura; Nome e Telefone editáveis.
+        /// Se o utilizador estiver associado a um funcionário, os dados editáveis (Nome, Telefone) são os da ficha do funcionário,
+        /// para que as alterações apareçam na lista de Funcionários.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Perfil()
@@ -127,19 +128,39 @@ namespace Finalproj.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction(nameof(Index));
 
+            var funcionario = await _context.Funcionarios.FirstOrDefaultAsync(f => f.UserId == user.Id);
+            if (funcionario != null)
+            {
+                // Utilizador associado a funcionário: mostrar e editar dados da ficha do funcionário (sincronizado com a lista)
+                var roles = await _userManager.GetRolesAsync(user);
+                var model = new PerfilEditViewModel
+                {
+                    UserName = user.UserName ?? user.Email ?? "",
+                    Email = user.Email ?? "",
+                    Nome = funcionario.NomeCompleto,
+                    Telefone = funcionario.Telefone,
+                    Roles = roles.ToList(),
+                    DataRegisto = funcionario.DataRegisto,
+                    EstaAssociadoAFuncionario = true
+                };
+                ViewData["AlterarPasswordViewModel"] = new AlterarPasswordViewModel();
+                return View(model);
+            }
+
+            // Sem funcionário associado: usar dados da tabela Perfil (como antes)
             var perfil = await _context.Perfis.FirstOrDefaultAsync(p => p.UserId == user.Id);
-            var roles = await _userManager.GetRolesAsync(user);
-            var model = new PerfilEditViewModel
+            var rolesPerfil = await _userManager.GetRolesAsync(user);
+            var modelPerfil = new PerfilEditViewModel
             {
                 UserName = user.UserName ?? user.Email ?? "",
                 Email = user.Email ?? "",
                 Nome = perfil?.Nome,
                 Telefone = perfil?.Telefone,
-                Roles = roles.ToList(),
+                Roles = rolesPerfil.ToList(),
                 DataRegisto = perfil?.DataRegisto
             };
             ViewData["AlterarPasswordViewModel"] = new AlterarPasswordViewModel();
-            return View(model);
+            return View(modelPerfil);
         }
 
         [HttpPost]
@@ -151,6 +172,14 @@ namespace Finalproj.Controllers
 
             if (ModelState.IsValid)
             {
+                var funcionario = await _context.Funcionarios.FirstOrDefaultAsync(f => f.UserId == user.Id);
+                if (funcionario != null)
+                {
+                    // Atualizar a ficha do funcionário para que as alterações apareçam na lista de Funcionários
+                    funcionario.NomeCompleto = model.Nome ?? funcionario.NomeCompleto;
+                    funcionario.Telefone = model.Telefone ?? funcionario.Telefone;
+                }
+
                 var perfil = await _context.Perfis.FirstOrDefaultAsync(p => p.UserId == user.Id);
                 if (perfil == null)
                 {
@@ -168,8 +197,17 @@ namespace Finalproj.Controllers
             model.Email = user.Email ?? "";
             var roles = await _userManager.GetRolesAsync(user);
             model.Roles = roles.ToList();
-            var perfilReload = await _context.Perfis.FirstOrDefaultAsync(p => p.UserId == user.Id);
-            model.DataRegisto = perfilReload?.DataRegisto;
+            var funcionarioReload = await _context.Funcionarios.FirstOrDefaultAsync(f => f.UserId == user.Id);
+            if (funcionarioReload != null)
+            {
+                model.DataRegisto = funcionarioReload.DataRegisto;
+                model.EstaAssociadoAFuncionario = true;
+            }
+            else
+            {
+                var perfilReload = await _context.Perfis.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                model.DataRegisto = perfilReload?.DataRegisto;
+            }
             ViewData["AlterarPasswordViewModel"] = new AlterarPasswordViewModel();
             return View(model);
         }
@@ -204,15 +242,30 @@ namespace Finalproj.Controllers
 
         private async Task<PerfilEditViewModel> ObterPerfilEditViewModelAsync(IdentityUser user)
         {
+            var funcionario = await _context.Funcionarios.FirstOrDefaultAsync(f => f.UserId == user.Id);
+            if (funcionario != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                return new PerfilEditViewModel
+                {
+                    UserName = user.UserName ?? user.Email ?? "",
+                    Email = user.Email ?? "",
+                    Nome = funcionario.NomeCompleto,
+                    Telefone = funcionario.Telefone,
+                    Roles = roles.ToList(),
+                    DataRegisto = funcionario.DataRegisto,
+                    EstaAssociadoAFuncionario = true
+                };
+            }
             var perfil = await _context.Perfis.FirstOrDefaultAsync(p => p.UserId == user.Id);
-            var roles = await _userManager.GetRolesAsync(user);
+            var rolesPerfil = await _userManager.GetRolesAsync(user);
             return new PerfilEditViewModel
             {
                 UserName = user.UserName ?? user.Email ?? "",
                 Email = user.Email ?? "",
                 Nome = perfil?.Nome,
                 Telefone = perfil?.Telefone,
-                Roles = roles.ToList(),
+                Roles = rolesPerfil.ToList(),
                 DataRegisto = perfil?.DataRegisto
             };
         }

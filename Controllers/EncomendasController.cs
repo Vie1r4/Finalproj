@@ -54,12 +54,12 @@ public class EncomendasController : Controller
     {
         IQueryable<Encomenda> query = _context.Encomendas
             .AsNoTracking()
-            .Include(e => e.Cliente)
-            .OrderByDescending(e => e.DataCriacao);
+            .Include(e => e.Cliente);
 
         if (!string.IsNullOrEmpty(estado) && ConstantesEncomenda.TodosEstados.Contains(estado))
             query = query.Where(e => e.Estado == estado);
 
+        query = query.OrderBy(e => e.DataEntrega == null).ThenBy(e => e.DataEntrega ?? DateTime.MaxValue).ThenByDescending(e => e.DataCriacao);
         var lista = await query.ToListAsync(cancellationToken);
 
         var totaisPorEstado = await _context.Encomendas
@@ -247,7 +247,7 @@ public class EncomendasController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> AdicionarItens(int clienteId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AdicionarItens(int clienteId, DateTime? dataEntrega, string? observacoes, CancellationToken cancellationToken = default)
     {
         var cliente = await _context.Clientes.FindAsync(clienteId);
         if (cliente == null)
@@ -267,7 +267,9 @@ public class EncomendasController : Controller
         {
             ClienteId = clienteId,
             Estado = ConstantesEncomenda.PENDENTE,
-            DataCriacao = DateTime.UtcNow
+            DataCriacao = DateTime.UtcNow,
+            DataEntrega = dataEntrega,
+            Observacoes = string.IsNullOrWhiteSpace(observacoes) ? null : observacoes.Trim().Length > 2000 ? observacoes.Trim()[..2000] : observacoes.Trim()
         };
         _context.Encomendas.Add(encomenda);
         await _context.SaveChangesAsync(cancellationToken);
@@ -376,15 +378,56 @@ public class EncomendasController : Controller
             TempData["Erro"] = "Apenas encomendas aceites podem ser preparadas.";
             return RedirectToAction(nameof(Details), new { id });
         }
+
+        var user = await _userManager.GetUserAsync(User!);
+        var rolesDoUtilizador = user == null ? Array.Empty<string>() : (await _userManager.GetRolesAsync(user)).ToArray();
+        var idsPaióisComAcesso = await _context.PaiolAcessos
+            .Where(a => rolesDoUtilizador.Contains(a.RoleName))
+            .Select(a => a.PaiolId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var paióis = await _context.Paiol
+            .AsNoTracking()
+            .Where(p => idsPaióisComAcesso.Contains(p.Id))
+            .OrderBy(p => p.Nome)
+            .ToListAsync(cancellationToken);
+
+        var entradasPorPaiolProduto = await _context.EntradasPaiol
+            .AsNoTracking()
+            .Where(e => idsPaióisComAcesso.Contains(e.PaiolId))
+            .GroupBy(e => new { e.PaiolId, e.ProdutoId })
+            .Select(g => new { g.Key.PaiolId, g.Key.ProdutoId, Total = g.Sum(e => e.Quantidade) })
+            .ToListAsync(cancellationToken);
+        var saidasPorPaiolProduto = await _context.SaidasPaiol
+            .AsNoTracking()
+            .Where(s => idsPaióisComAcesso.Contains(s.PaiolId))
+            .GroupBy(s => new { s.PaiolId, s.ProdutoId })
+            .Select(g => new { g.Key.PaiolId, g.Key.ProdutoId, Total = g.Sum(s => s.Quantidade) })
+            .ToListAsync(cancellationToken);
+
+        var stockPaiolProduto = new Dictionary<string, decimal>();
+        foreach (var e in entradasPorPaiolProduto)
+            stockPaiolProduto[$"{e.PaiolId}_{e.ProdutoId}"] = e.Total;
+        foreach (var s in saidasPorPaiolProduto)
+        {
+            var key = $"{s.PaiolId}_{s.ProdutoId}";
+            stockPaiolProduto[key] = stockPaiolProduto.GetValueOrDefault(key) - s.Total;
+        }
+        foreach (var k in stockPaiolProduto.Keys.ToList())
+            if (stockPaiolProduto[k] < 0) stockPaiolProduto[k] = 0;
+
         var stockPorProduto = await StockDisponivelService.ObterStockDisponivelPorProdutoAsync(_context, cancellationToken);
         ViewData["StockPorProduto"] = stockPorProduto;
+        ViewData["Paiols"] = paióis;
+        ViewData["StockPaiolProduto"] = stockPaiolProduto;
         return View(encomenda);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> RegistarPreparacao(int id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> RegistarPreparacao(int id, List<RetiradaPreparacaoInput>? retiradas, CancellationToken cancellationToken = default)
     {
         var encomenda = await _context.Encomendas.Include(e => e.Itens).ThenInclude(i => i.Produto).FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         if (encomenda == null) return NotFound();
@@ -403,28 +446,57 @@ public class EncomendasController : Controller
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var entradas = await _context.EntradasPaiol
-            .Include(e => e.Paiol)
-            .Include(e => e.Produto)
-            .Where(e => idsPaióisComAcesso.Count == 0 || idsPaióisComAcesso.Contains(e.PaiolId))
-            .ToListAsync(cancellationToken);
-        var saidas = await _context.SaidasPaiol.Where(s => s.EntradaPaiolId != null).ToListAsync(cancellationToken);
-        var restantePorEntrada = new Dictionary<int, decimal>();
-        foreach (var e in entradas)
-            restantePorEntrada[e.Id] = e.Quantidade;
-        foreach (var s in saidas.Where(s => s.EntradaPaiolId.HasValue))
-            restantePorEntrada[s.EntradaPaiolId!.Value] = restantePorEntrada.GetValueOrDefault(s.EntradaPaiolId.Value) - s.Quantidade;
+        retiradas ??= new List<RetiradaPreparacaoInput>();
+        var retiradasComQuantidade = retiradas.Where(r => r.Quantidade > 0).ToList();
 
-        var entradasOrdenadasFifo = entradas
-            .Where(e => restantePorEntrada.GetValueOrDefault(e.Id, 0) > 0)
-            .OrderBy(e => e.DataFabrico ?? e.DataEntrada)
-            .ThenBy(e => e.DataEntrada)
-            .ToList();
+        var itensPorId = encomenda.Itens.ToDictionary(i => i.Id);
+        foreach (var r in retiradasComQuantidade)
+        {
+            if (!itensPorId.ContainsKey(r.EncomendaItemId))
+            {
+                TempData["Erro"] = "Dados de preparação inválidos (item não pertence à encomenda).";
+                return RedirectToAction(nameof(Preparar), new { id });
+            }
+            if (!idsPaióisComAcesso.Contains(r.PaiolId))
+            {
+                TempData["Erro"] = "Não tem acesso a um dos paióis selecionados.";
+                return RedirectToAction(nameof(Preparar), new { id });
+            }
+        }
 
         foreach (var item in encomenda.Itens)
         {
-            var falta = item.QuantidadePedida;
-            foreach (var ent in entradasOrdenadasFifo.Where(e => e.ProdutoId == item.ProdutoId))
+            var somaRetiradas = retiradasComQuantidade.Where(r => r.EncomendaItemId == item.Id).Sum(r => r.Quantidade);
+            if (Math.Abs(somaRetiradas - item.QuantidadePedida) > 0.0001m)
+            {
+                TempData["Erro"] = $"Para o produto {item.Produto?.Nome}, a soma das quantidades a retirar ({somaRetiradas:N2}) deve ser igual à quantidade pedida ({item.QuantidadePedida:N2}).";
+                return RedirectToAction(nameof(Preparar), new { id });
+            }
+        }
+
+        var entradas = await _context.EntradasPaiol
+            .Include(e => e.Paiol)
+            .Include(e => e.Produto)
+            .Where(e => idsPaióisComAcesso.Contains(e.PaiolId))
+            .ToListAsync(cancellationToken);
+        var saidasExistentes = await _context.SaidasPaiol.Where(s => s.EntradaPaiolId != null).ToListAsync(cancellationToken);
+        var restantePorEntrada = new Dictionary<int, decimal>();
+        foreach (var e in entradas)
+            restantePorEntrada[e.Id] = e.Quantidade;
+        foreach (var s in saidasExistentes.Where(s => s.EntradaPaiolId.HasValue))
+            restantePorEntrada[s.EntradaPaiolId!.Value] = restantePorEntrada.GetValueOrDefault(s.EntradaPaiolId.Value) - s.Quantidade;
+
+        foreach (var r in retiradasComQuantidade)
+        {
+            var item = itensPorId[r.EncomendaItemId];
+            var falta = r.Quantidade;
+            var entradasPaiolProduto = entradas
+                .Where(e => e.PaiolId == r.PaiolId && e.ProdutoId == item.ProdutoId && restantePorEntrada.GetValueOrDefault(e.Id, 0) > 0)
+                .OrderBy(e => e.DataFabrico ?? e.DataEntrada)
+                .ThenBy(e => e.DataEntrada)
+                .ToList();
+
+            foreach (var ent in entradasPaiolProduto)
             {
                 if (falta <= 0) break;
                 var rest = restantePorEntrada.GetValueOrDefault(ent.Id, 0);
@@ -453,9 +525,10 @@ public class EncomendasController : Controller
                     encomenda_id = encomenda.Id
                 }, cancellationToken);
             }
+
             if (falta > 0)
             {
-                TempData["Erro"] = $"Stock insuficiente para preparar o item {item.Produto?.Nome}. Falta alocar {falta:N2}. Se não houver stock disponível, pode rejeitar a encomenda em Detalhes para libertar a reserva.";
+                TempData["Erro"] = $"Stock insuficiente no paiol selecionado para o produto {item.Produto?.Nome}. Reduza a quantidade ou escolha outro paiol.";
                 return RedirectToAction(nameof(Preparar), new { id });
             }
         }

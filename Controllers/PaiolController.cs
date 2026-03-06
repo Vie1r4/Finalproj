@@ -16,11 +16,15 @@ namespace Finalproj.Controllers
     {
         private readonly FinalprojContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IWebHostEnvironment _env;
+        private const string PastaDocumentosPaiol = "Documentos/Paiol";
+        private static readonly string[] ExtensoesPermitidas = { ".pdf", ".jpg", ".jpeg", ".png" };
 
-        public PaiolController(FinalprojContext context, UserManager<IdentityUser> userManager)
+        public PaiolController(FinalprojContext context, UserManager<IdentityUser> userManager, IWebHostEnvironment env)
         {
             _context = context;
             _userManager = userManager;
+            _env = env;
         }
 
         /// <summary>Ids dos paióis a que o utilizador atual tem acesso (por cargo).</summary>
@@ -179,6 +183,15 @@ namespace Finalproj.Controllers
                 var entradas = await query.OrderByDescending(e => e.DataEntrada).ToListAsync();
                 ViewData["Entradas"] = entradas;
                 ViewData["Saidas"] = new List<SaidaPaiol>();
+
+                var userIdsEntradas = entradas.Where(e => !string.IsNullOrEmpty(e.FuncionarioRegistouUserId)).Select(e => e.FuncionarioRegistouUserId!).Distinct().ToList();
+                var nomesEntradas = new Dictionary<string, string>();
+                foreach (var uid in userIdsEntradas)
+                {
+                    var u = await _userManager.FindByIdAsync(uid);
+                    nomesEntradas[uid] = u?.UserName ?? uid;
+                }
+                ViewData["NomesUtilizadoresEntradas"] = nomesEntradas;
             }
             else
             {
@@ -274,7 +287,7 @@ namespace Finalproj.Controllers
             if (!isAdmin && !idsAcesso.Contains(id.Value))
                 return Forbid();
 
-            var paiol = await _context.Paiol.FirstOrDefaultAsync(m => m.Id == id);
+            var paiol = await _context.Paiol.Include(p => p.DocumentosExtras).FirstOrDefaultAsync(m => m.Id == id);
             if (paiol == null)
                 return NotFound();
 
@@ -314,7 +327,6 @@ namespace Finalproj.Controllers
         public IActionResult Create()
         {
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text");
-            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text");
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             return View();
@@ -324,7 +336,7 @@ namespace Finalproj.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,TipoPaiol,NumeroLicenca,DataValidadeLicenca,DivisoesAutorizadas,GruposAutorizados,DataInicio,DataFim")] Paiol paiol, string[]? CargosAcesso)
+        public async Task<IActionResult> Create([Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,NumeroLicenca,DataValidadeLicenca")] Paiol paiol, string[]? CargosAcesso, List<DocumentoExtraInput>? documentosExtras)
         {
             if (ModelState.IsValid)
             {
@@ -332,7 +344,6 @@ namespace Finalproj.Controllers
                 {
                     ModelState.AddModelError(string.Empty, "Perfil de risco ou estado inválido.");
                     ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
-                    ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
                     ViewData["Estados"] = ConstantesPaiol.Estados;
                     ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
                     return View(paiol);
@@ -348,10 +359,28 @@ namespace Finalproj.Controllers
                     }
                     await _context.SaveChangesAsync();
                 }
+                var pastaBase = Path.Combine(_env.WebRootPath, PastaDocumentosPaiol, paiol.Id.ToString());
+                if (Directory.Exists(pastaBase) == false)
+                    Directory.CreateDirectory(pastaBase);
+                if (documentosExtras != null)
+                {
+                    var idx = 0;
+                    foreach (var ext in documentosExtras)
+                    {
+                        if (ext?.Ficheiro != null && FicheiroPermitido(ext.Ficheiro.FileName))
+                        {
+                            var nome = string.IsNullOrWhiteSpace(ext.Nome) ? "Documento " + (idx + 1) : ext.Nome.Trim();
+                            if (nome.Length > 100) nome = nome[..100];
+                            var caminho = await GuardarFicheiro(ext.Ficheiro, pastaBase, "doc_" + Guid.NewGuid().ToString("N")[..8]);
+                            _context.PaiolDocumentoExtras.Add(new PaiolDocumentoExtra { PaiolId = paiol.Id, Nome = nome, Caminho = caminho });
+                            idx++;
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
                 return RedirectToAction(nameof(Gestao));
             }
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
-            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             return View(paiol);
@@ -364,13 +393,12 @@ namespace Finalproj.Controllers
             if (id == null)
                 return NotFound();
 
-            var paiol = await _context.Paiol.FindAsync(id);
+            var paiol = await _context.Paiol.Include(p => p.DocumentosExtras).FirstOrDefaultAsync(p => p.Id == id);
             if (paiol == null)
                 return NotFound();
 
             var acessos = await _context.PaiolAcessos.Where(a => a.PaiolId == id).Select(a => a.RoleName).ToListAsync();
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
-            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             ViewData["CargosSelecionados"] = acessos;
@@ -381,7 +409,7 @@ namespace Finalproj.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,TipoPaiol,NumeroLicenca,DataValidadeLicenca,DivisoesAutorizadas,GruposAutorizados,DataInicio,DataFim")] Paiol paiol, string[]? CargosAcesso)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nome,Localizacao,LimiteMLE,PerfilRisco,Estado,NumeroLicenca,DataValidadeLicenca")] Paiol paiol, string[]? CargosAcesso, List<DocumentoExtraInput>? documentosExtras, List<int>? RemoverDocumentoExtraIds)
         {
             if (id != paiol.Id)
                 return NotFound();
@@ -390,6 +418,23 @@ namespace Finalproj.Controllers
             {
                 try
                 {
+                    if (RemoverDocumentoExtraIds != null && RemoverDocumentoExtraIds.Count > 0)
+                    {
+                        var aRemover = await _context.PaiolDocumentoExtras
+                            .Where(e => e.PaiolId == id && RemoverDocumentoExtraIds.Contains(e.Id))
+                            .ToListAsync();
+                        foreach (var e in aRemover)
+                        {
+                            var caminhoFisico = Path.Combine(_env.WebRootPath, e.Caminho);
+                            if (System.IO.File.Exists(caminhoFisico))
+                            {
+                                try { System.IO.File.Delete(caminhoFisico); } catch { }
+                            }
+                            _context.PaiolDocumentoExtras.Remove(e);
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
                     _context.Update(paiol);
                     await _context.SaveChangesAsync();
 
@@ -404,6 +449,26 @@ namespace Finalproj.Controllers
                         }
                     }
                     await _context.SaveChangesAsync();
+
+                    var pastaBase = Path.Combine(_env.WebRootPath, PastaDocumentosPaiol, id.ToString());
+                    if (Directory.Exists(pastaBase) == false)
+                        Directory.CreateDirectory(pastaBase);
+                    if (documentosExtras != null)
+                    {
+                        var idx = 0;
+                        foreach (var ext in documentosExtras)
+                        {
+                            if (ext?.Ficheiro != null && FicheiroPermitido(ext.Ficheiro.FileName))
+                            {
+                                var nome = string.IsNullOrWhiteSpace(ext.Nome) ? "Documento " + (idx + 1) : ext.Nome.Trim();
+                                if (nome.Length > 100) nome = nome[..100];
+                                var caminho = await GuardarFicheiro(ext.Ficheiro, pastaBase, "doc_" + Guid.NewGuid().ToString("N")[..8]);
+                                _context.PaiolDocumentoExtras.Add(new PaiolDocumentoExtra { PaiolId = id, Nome = nome, Caminho = caminho });
+                                idx++;
+                            }
+                        }
+                        await _context.SaveChangesAsync();
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -415,7 +480,6 @@ namespace Finalproj.Controllers
             }
             var acessos = await _context.PaiolAcessos.Where(a => a.PaiolId == id).Select(a => a.RoleName).ToListAsync();
             ViewData["PerfisRisco"] = new SelectList(ConstantesPaiol.LicencasParaDropdown(), "Value", "Text", paiol.PerfilRisco);
-            ViewData["TiposPaiol"] = new SelectList(ConstantesPaiol.TiposPaiolParaDropdown(), "Value", "Text", paiol.TipoPaiol);
             ViewData["Estados"] = ConstantesPaiol.Estados;
             ViewData["CargosDisponiveis"] = ConstantesPaiol.CargosDisponiveis;
             ViewData["CargosSelecionados"] = acessos;
@@ -445,10 +509,52 @@ namespace Finalproj.Controllers
             var paiol = await _context.Paiol.FindAsync(id);
             if (paiol != null)
             {
+                var pastaBase = Path.Combine(_env.WebRootPath, PastaDocumentosPaiol, id.ToString());
+                if (Directory.Exists(pastaBase))
+                {
+                    try { Directory.Delete(pastaBase, recursive: true); } catch { }
+                }
                 _context.Paiol.Remove(paiol);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Gestao));
+        }
+
+        public IActionResult Download(int id, int extraId)
+        {
+            var extra = _context.PaiolDocumentoExtras.AsNoTracking().FirstOrDefault(e => e.Id == extraId && e.PaiolId == id);
+            if (extra == null)
+                return NotFound();
+            return ServirFicheiro(extra.Caminho);
+        }
+
+        private IActionResult ServirFicheiro(string caminhoRelativo)
+        {
+            var caminhoFisico = Path.Combine(_env.WebRootPath, caminhoRelativo);
+            if (!System.IO.File.Exists(caminhoFisico))
+                return NotFound();
+            var ext = Path.GetExtension(caminhoRelativo).ToLowerInvariant();
+            var contentType = ext switch { ".pdf" => "application/pdf", ".jpg" or ".jpeg" => "image/jpeg", ".png" => "image/png", _ => "application/octet-stream" };
+            var nomeFicheiro = Path.GetFileName(caminhoRelativo);
+            Response.Headers["Content-Disposition"] = "inline; filename=\"" + nomeFicheiro.Replace("\"", "\\\"") + "\"";
+            return PhysicalFile(caminhoFisico, contentType);
+        }
+
+        private static bool FicheiroPermitido(string fileName)
+        {
+            var ext = Path.GetExtension(fileName);
+            return !string.IsNullOrEmpty(ext) && ExtensoesPermitidas.Contains(ext.ToLowerInvariant());
+        }
+
+        private async Task<string> GuardarFicheiro(IFormFile ficheiro, string pastaBase, string prefixo)
+        {
+            var ext = Path.GetExtension(ficheiro.FileName).ToLowerInvariant();
+            var nomeUnico = $"{prefixo}_{Guid.NewGuid():N}{ext}";
+            var caminhoFisico = Path.Combine(pastaBase, nomeUnico);
+            await using var stream = new FileStream(caminhoFisico, FileMode.Create);
+            await ficheiro.CopyToAsync(stream);
+            var idPasta = Path.GetFileName(pastaBase.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            return Path.Combine(PastaDocumentosPaiol, idPasta, nomeUnico).Replace('\\', '/');
         }
 
         private async Task<bool> PaiolExistsAsync(int id)

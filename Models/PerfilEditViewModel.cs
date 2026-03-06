@@ -23,5 +23,8 @@ namespace Finalproj.Models
 
         /// <summary> Data de criação do perfil / registo. Só leitura. </summary>
         public DateTime? DataRegisto { get; set; }
+
+        /// <summary> Indica se a conta está associada a uma ficha de funcionário (dados editados aqui atualizam a lista de Funcionários). </summary>
+        public bool EstaAssociadoAFuncionario { get; set; }
     }
 }

@@ -44,49 +44,18 @@ public static class MotorValidacaoPaiol
             return r;
         }
 
-        // REGRA 2 — Divisão autorizada pela licença
-        var divisoesAuth = ObterListaDivisoes(paiol.DivisoesAutorizadas);
-        if (divisoesAuth.Count > 0)
+        // REGRA 2 — Divisão autorizada pela licença (usa Perfil de Risco do paiol)
+        if (!RegrasLicencaPaiol.ProdutoPodeEntrar(paiol.PerfilRisco, produto.FamiliaRisco))
         {
-            if (!divisoesAuth.Contains(divisaoProduto))
+            r.Erros.Add(new ErroValidacao
             {
-                r.Erros.Add(new ErroValidacao
-                {
-                    Codigo = "ERRO_002",
-                    Mensagem = $"Divisão {divisaoProduto} não autorizada neste paiol. Licença autoriza apenas: {paiol.DivisoesAutorizadas}."
-                });
-                return r;
-            }
-        }
-        else
-        {
-            if (!RegrasLicencaPaiol.ProdutoPodeEntrar(paiol.PerfilRisco, produto.FamiliaRisco))
-            {
-                r.Erros.Add(new ErroValidacao
-                {
-                    Codigo = "ERRO_002",
-                    Mensagem = RegrasLicencaPaiol.MensagemRecusa(paiol.PerfilRisco, produto.FamiliaRisco)
-                });
-                return r;
-            }
+                Codigo = "ERRO_002",
+                Mensagem = RegrasLicencaPaiol.MensagemRecusa(paiol.PerfilRisco, produto.FamiliaRisco)
+            });
+            return r;
         }
 
-        // REGRA 3 — Grupo autorizado pela licença
-        var gruposAuth = ObterLista(paiol.GruposAutorizados);
-        if (gruposAuth.Count > 0)
-        {
-            if (!gruposAuth.Contains(grupoProduto))
-            {
-                r.Erros.Add(new ErroValidacao
-                {
-                    Codigo = "ERRO_003",
-                    Mensagem = $"Grupo de compatibilidade {grupoProduto} não autorizado neste paiol. Licença autoriza apenas: {paiol.GruposAutorizados}."
-                });
-                return r;
-            }
-        }
-
-        // REGRA 4 — Compatibilidade com produtos já existentes (matriz ADR 7.2.5)
+        // REGRA 3 — Grupo autorizado (removido: já não há GruposAutorizados no paiol; compatibilidade entre produtos continua na Regra 4) — Compatibilidade com produtos já existentes (matriz ADR 7.2.5)
         foreach (var q in produtosNoPaiol)
         {
             var grupoExistente = (q.Grupo ?? "G").Trim().ToUpperInvariant();
@@ -170,30 +139,6 @@ public static class MotorValidacaoPaiol
                 Mensagem = $"Lote fora de prazo de validade. Data de validade: {dataValidadeLote:dd/MM/yyyy}. Não pode entrar em stock ativo."
             });
             return r;
-        }
-
-        // REGRA 9 — Paiol provisório dentro do período
-        if (string.Equals(paiol.TipoPaiol, "PROVISORIO_EVENTO", StringComparison.OrdinalIgnoreCase))
-        {
-            var hoje = DateTime.UtcNow.Date;
-            if (paiol.DataFim.HasValue && paiol.DataFim.Value.Date < hoje)
-            {
-                r.Erros.Add(new ErroValidacao
-                {
-                    Codigo = "ERRO_007",
-                    Mensagem = $"Paiol provisório fora do período licenciado. Período autorizado: {paiol.DataInicio:dd/MM/yyyy} a {paiol.DataFim:dd/MM/yyyy}."
-                });
-                return r;
-            }
-            if (paiol.DataInicio.HasValue && paiol.DataInicio.Value.Date > hoje)
-            {
-                r.Erros.Add(new ErroValidacao
-                {
-                    Codigo = "ERRO_007",
-                    Mensagem = $"Paiol provisório ainda não está no período licenciado. Início: {paiol.DataInicio:dd/MM/yyyy}."
-                });
-                return r;
-            }
         }
 
         r.Aprovado = true;

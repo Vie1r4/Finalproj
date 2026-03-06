@@ -175,6 +175,14 @@
                     </ul>
                     <form asp-action="AdicionarItens" method="post">
                         <input type="hidden" name="clienteId" value="@clienteId" />
+                        <div class="mb-3">
+                            <label for="dataEntrega" class="form-label small">Data de entrega</label>
+                            <input type="date" name="dataEntrega" id="dataEntrega" class="form-control form-control-sm" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="observacoes" class="form-label small">Observações</label>
+                            <textarea name="observacoes" id="observacoes" class="form-control form-control-sm" rows="2" maxlength="2000" placeholder="Notas, morada de entrega, etc."></textarea>
+                        </div>
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-success w-100 py-2">Registar encomenda</button>
                     </form>

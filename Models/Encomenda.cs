@@ -25,6 +25,15 @@ public class Encomenda
     [DataType(DataType.DateTime)]
     public DateTime? DataConclusao { get; set; }
 
+    /// <summary> Data prevista de entrega ao cliente. </summary>
+    [Display(Name = "Data de entrega")]
+    [DataType(DataType.Date)]
+    public DateTime? DataEntrega { get; set; }
+
+    [StringLength(2000)]
+    [Display(Name = "Observações")]
+    public string? Observacoes { get; set; }
+
     [StringLength(500)]
     [Display(Name = "Motivo de rejeição")]
     public string? MotivoRejeicao { get; set; }

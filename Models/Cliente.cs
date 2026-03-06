@@ -56,4 +56,7 @@ public class Cliente
     /// <summary> Utilizador Identity associado (para cliente que acede ao sistema e faz encomendas). </summary>
     [StringLength(450)]
     public string? UserId { get; set; }
+
+    /// <summary> Documentos do cliente com nome à escolha (sistema «+»). </summary>
+    public ICollection<ClienteDocumentoExtra> DocumentosExtras { get; set; } = new List<ClienteDocumentoExtra>();
 }

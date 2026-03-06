@@ -15,6 +15,7 @@
             <th>Nome de utilizador</th>
             <th>Email</th>
             <th>Cargos</th>
+            <th>Funcionário associado</th>
             <th></th>
         </tr>
     </thead>
@@ -35,7 +36,17 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="EditarUtilizador" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Atribuir cargos</a>
+                    @if (!string.IsNullOrEmpty(u.FuncionarioAssociadoNome))
+                    {
+                        <span class="text-success">@u.FuncionarioAssociadoNome</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="EditarUtilizador" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Editar</a>
                 </td>
             </tr>
         }

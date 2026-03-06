@@ -16,8 +16,9 @@
             </div>
             <div class="mb-2">
                 <label asp-for="NEMPorUnidade" class="form-label"></label>
-                <input asp-for="NEMPorUnidade" class="form-control" step="0.0001" />
+                <input asp-for="NEMPorUnidade" class="form-control" type="number" step="any" min="0.0001" />
                 <span asp-validation-for="NEMPorUnidade" class="text-danger"></span>
+                <small class="text-muted">Kg de pólvora (NEM) por unidade. Inteiros (ex.: 5) ou decimais (ex.: 0,2 ou 0,002).</small>
             </div>
             <div class="mb-2">
                 <label asp-for="FamiliaRisco" class="form-label"></label>

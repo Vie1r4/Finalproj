@@ -24,6 +24,11 @@ public class EntradaPaiol
     [Display(Name = "Data de entrada")]
     public DateTime DataEntrada { get; set; } = DateTime.UtcNow;
 
+    /// <summary> Utilizador (Identity) que registou a entrada. </summary>
+    [StringLength(450)]
+    [Display(Name = "Registado por")]
+    public string? FuncionarioRegistouUserId { get; set; }
+
     /// <summary> Número de lote (batch) para rastreabilidade e FIFO. </summary>
     [StringLength(50)]
     [Display(Name = "N.º de lote")]
