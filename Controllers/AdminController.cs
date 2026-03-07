@@ -127,5 +127,48 @@ namespace Finalproj.Controllers
 
             return RedirectToAction(nameof(Utilizadores));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarUtilizador(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return NotFound();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (currentUserId == id)
+            {
+                TempData["Erro"] = "Não pode eliminar a sua própria conta de administrador.";
+                return RedirectToAction(nameof(Utilizadores));
+            }
+
+            var funcionarios = await _context.Funcionarios.Where(f => f.UserId == id).ToListAsync();
+            foreach (var f in funcionarios)
+            {
+                f.UserId = null;
+            }
+
+            var clientes = await _context.Clientes.Where(c => c.UserId == id).ToListAsync();
+            foreach (var c in clientes)
+            {
+                c.UserId = null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                TempData["Erro"] = "Não foi possível eliminar o utilizador.";
+            }
+            else
+            {
+                TempData["Sucesso"] = "Utilizador eliminado com sucesso.";
+            }
+
+            return RedirectToAction(nameof(Utilizadores));
+        }
     }
 }

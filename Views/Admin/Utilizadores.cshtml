@@ -9,6 +9,15 @@
     <a asp-action="Index" class="btn btn-outline-secondary">← Voltar ao painel</a>
 </p>
 
+@if (TempData["Sucesso"] is string sucessoMsg)
+{
+    <div class="alert alert-success">@sucessoMsg</div>
+}
+@if (TempData["Erro"] is string erroMsg)
+{
+    <div class="alert alert-danger">@erroMsg</div>
+}
+
 <table class="table table-striped">
     <thead>
         <tr>
@@ -47,6 +56,12 @@
                 </td>
                 <td>
                     <a asp-action="EditarUtilizador" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <form asp-action="EliminarUtilizador" asp-route-id="@u.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Tem a certeza que pretende eliminar este utilizador?');">
+                            Eliminar
+                        </button>
+                    </form>
                 </td>
             </tr>
         }

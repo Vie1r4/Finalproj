@@ -56,6 +56,7 @@ static async Task InicializarAsync(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<FinalprojContext>();
+    await context.Database.MigrateAsync();
     DbInitializer.Initialize(context);
     await SeedRoles.InitializeAsync(scope.ServiceProvider);
 }
